@@ -13,6 +13,9 @@ export default function HomeScreen({ navigation }) {
   
   const [favorites, setFavorites] = useState([]);
   
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 24;
+
   const [activeTab, setActiveTab] = useState('EXPLORER');
 
   const toggleFavorite = async (id) => {
@@ -34,19 +37,38 @@ export default function HomeScreen({ navigation }) {
     } catch (error) {
       console.error("Eroare la actualizarea favoritelor:", error);
     }
-};
+  };
+
   const fetchCharacters = async () => {
     try {
-      const requests = Array.from({ length: 20 }, (_, i) => 
-        fetch(`https://spapi.dev/api/characters?page=${i + 1}`).then(res => res.json())
-      );
+      const firstResponse = await fetch('https://spapi.dev/api/characters');
       
-      const results = await Promise.all(requests);
-      const allCharacters = results.flatMap(json => json.data || []);
+      if (!firstResponse.ok) {
+        throw new Error(`Eroare HTTP: ${firstResponse.status}`);
+      }
       
-      setCharacters(allCharacters); 
+      const firstJson = await firstResponse.json();
+      let allChars = [...firstJson.data];
+      const totalPages = firstJson.meta?.last_page || 1; 
+
+      for (let i = 2; i <= totalPages; i++) {
+        const res = await fetch(`https://spapi.dev/api/characters?page=${i}`);
+        
+        if (res.ok) {
+          const json = await res.json();
+          if (json && json.data) {
+            allChars = [...allChars, ...json.data];
+          }
+        } else {
+          console.warn(`Am ratat pagina ${i} - Status: ${res.status}`);
+        }
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
+
+      setCharacters(allChars); 
+      
     } catch (error) {
-      console.error("Eroare la preluarea datelor:", error);
+      console.error("Eroare la preluarea tuturor datelor:", error);
     } finally {
       setIsLoading(false);
     }
@@ -65,6 +87,11 @@ export default function HomeScreen({ navigation }) {
     fetchUserFavorites();
   }, []);
 
+  // Resetăm pagina la 1 dacă schimbăm tab-ul (ca să nu rămânem blocați pe o pagină goală în Favorites)
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [activeTab]);
+
   const handleViewDex = async (item, imageUrl) => {
     try {
       const userRef = doc(db, "users", auth.currentUser.uid);
@@ -80,7 +107,7 @@ export default function HomeScreen({ navigation }) {
 
       const updates = { cheesyPoofs: increment(1) };
       if (newBadge) {
-        updates.achievements = arrayUnion(newBadge); // Adaugă insigna în listă dacă nu o are deja
+        updates.achievements = arrayUnion(newBadge);
       }
 
       await setDoc(userRef, updates, { merge: true });
@@ -149,9 +176,16 @@ export default function HomeScreen({ navigation }) {
       </View>
     );
   }
+
+  // --- AICI SE ÎNTÂMPLĂ MAGIA PAGINĂRII ---
   const displayedCharacters = activeTab === 'FAVORITES' 
     ? characters.filter(char => favorites.includes(char.id))
     : characters;
+
+  const totalPages = Math.ceil(displayedCharacters.length / itemsPerPage) || 1;
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentItems = displayedCharacters.slice(indexOfFirstItem, indexOfLastItem);
 
   return (
     <View style={styles.layout}>
@@ -174,7 +208,6 @@ export default function HomeScreen({ navigation }) {
             <Text style={[styles.menuText, activeTab === 'EXPLORER' && styles.menuTextActive]}>EXPLORER</Text>
           </TouchableOpacity>
 
-
           <TouchableOpacity 
             style={[styles.menuItem, activeTab === 'FAVORITES' && styles.menuItemActive]}
             onPress={() => setActiveTab('FAVORITES')}
@@ -190,6 +223,7 @@ export default function HomeScreen({ navigation }) {
             <Ionicons name="person-circle" size={20} color={activeTab === 'ACCOUNT' ? "#000" : "#555"} />
             <Text style={[styles.menuText, activeTab === 'ACCOUNT' && styles.menuTextActive]}>ACCOUNT</Text>
           </TouchableOpacity>
+          
           <TouchableOpacity 
             style={[styles.menuItem, activeTab === 'SETTINGS' && styles.menuItemActive]}
             onPress={() => setActiveTab('SETTINGS')}
@@ -199,6 +233,7 @@ export default function HomeScreen({ navigation }) {
           </TouchableOpacity>
         </View>
       </View>
+
       <View style={styles.mainContent}>
         {activeTab === 'FAVORITES' && displayedCharacters.length === 0 ? (
           <View style={styles.emptyState}>
@@ -214,21 +249,52 @@ export default function HomeScreen({ navigation }) {
             <Text style={styles.emptyStateText}>Ecran în construcție...</Text>
           </View>
         ) : (
-          <FlatList
-            data={displayedCharacters}
-            keyExtractor={(item) => item.id.toString()}
-            renderItem={renderCharacterCard}
-            numColumns={4} 
-            columnWrapperStyle={styles.row}
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={{ padding: 20 }}
-          />
+          <View style={{ flex: 1 }}>
+            <FlatList
+              data={currentItems} // Acum folosim lista tăiată la 24
+              keyExtractor={(item) => item.id.toString()}
+              renderItem={renderCharacterCard}
+              numColumns={4} 
+              columnWrapperStyle={styles.row}
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={{ padding: 20 }}
+            />
+            
+            {/* Butoanele de paginare sunt acum AICI, la finalul listei */}
+            {totalPages > 1 && (
+              <View style={styles.paginationContainer}>
+                <TouchableOpacity 
+                  style={[styles.pageButton, currentPage === 1 && styles.disabledButton]}
+                  disabled={currentPage === 1}
+                  onPress={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                >
+                  <Ionicons name="arrow-back" size={20} color={currentPage === 1 ? "#999" : "#000"} />
+                  <Text style={[styles.pageButtonText, currentPage === 1 && styles.disabledButtonText]}>PREV</Text>
+                </TouchableOpacity>
+
+                <View style={styles.pageBadge}>
+                  <Text style={styles.pageBadgeText}>PAGE {currentPage} / {totalPages}</Text>
+                </View>
+
+                <TouchableOpacity 
+                  style={[styles.pageButton, currentPage === totalPages && styles.disabledButton]}
+                  disabled={currentPage === totalPages}
+                  onPress={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                >
+                  <Text style={[styles.pageButtonText, currentPage === totalPages && styles.disabledButtonText]}>NEXT</Text>
+                  <Ionicons name="arrow-forward" size={20} color={currentPage === totalPages ? "#999" : "#000"} />
+                </TouchableOpacity>
+              </View>
+            )}
+          </View>
         )}
       </View>
 
     </View>
   );
 }
+
+// ... aici jos rămân styles tăi exacți cum erau ...
 const styles = StyleSheet.create({
   layout: {
     flex: 1,
@@ -291,7 +357,7 @@ const styles = StyleSheet.create({
     marginLeft: 15,
     fontSize: 14,
     fontWeight: 'bold',
-    color: '#555', // Schimbat puțin pentru contrast
+    color: '#555', 
     letterSpacing: 1,
   },
   menuTextActive: {
@@ -392,5 +458,56 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#666',
     marginTop: 5,
-  }
+  },
+  paginationContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 15,
+    paddingHorizontal: 10,
+    backgroundColor: '#fff',
+    borderTopWidth: 4,
+    borderColor: '#000',
+    marginTop: 10,
+  },
+  pageButton: {
+    flexDirection: 'row',
+    backgroundColor: '#17a2b8', 
+    borderWidth: 3,
+    borderColor: '#000',
+    paddingVertical: 8,
+    paddingHorizontal: 15,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 2, height: 2 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+  },
+  pageButtonText: {
+    fontSize: 14,
+    fontWeight: '900',
+    color: '#000',
+    marginHorizontal: 5,
+  },
+  disabledButton: {
+    backgroundColor: '#e0e0e0',
+    shadowOffset: { width: 0, height: 0 },
+  },
+  disabledButtonText: {
+    color: '#999',
+  },
+  pageBadge: {
+    backgroundColor: '#fff',
+    borderWidth: 3,
+    borderColor: '#000',
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    transform: [{ rotate: '-1deg' }], 
+  },
+  pageBadgeText: {
+    fontSize: 14,
+    fontWeight: '900',
+    color: '#000',
+    letterSpacing: 1,
+  },
 });
