@@ -87,7 +87,6 @@ export default function HomeScreen({ navigation }) {
     fetchUserFavorites();
   }, []);
 
-  // Resetăm pagina la 1 dacă schimbăm tab-ul (ca să nu rămânem blocați pe o pagină goală în Favorites)
   useEffect(() => {
     setCurrentPage(1);
   }, [activeTab]);

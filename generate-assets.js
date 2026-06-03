@@ -42,91 +42,37 @@ function pageTitleToUrl(title) {
 }
 
 async function fetchCharactersFromAPI() {
-  try {
-    console.log('Se descarcă personajele de la SPapi...');
-    const pageRequests = Array.from({ length: 20 }, (_, index) => {
-      const url = `${SPAPI_BASE_URL}/characters?page=${index + 1}`;
-      return axios.get(url);
-    });
-
-    const responses = await Promise.all(pageRequests);
-    return responses.flatMap((response) => response.data?.data || []);
-  } catch (error) {
-    console.error('Eroare la conectarea cu SPapi:', error.message);
-    return [];
-  }
-}
-
-async function searchWikiPageTitle(characterName) {
-  const searchUrl = `${WIKI_BASE_URL}/api.php`;
-
-  try {
-    const response = await axios.get(searchUrl, {
-      params: {
-        action: 'query',
-        list: 'search',
-        srsearch: characterName,
-        format: 'json',
-        origin: '*',
-      },
-      headers: { 'User-Agent': 'ParkDex/2.0' },
-    });
-
-    const results = response.data?.query?.search || [];
-    if (results.length === 0) return null;
-
-    const exactMatch = results.find(
-      (result) => result.title.toLowerCase() === characterName.toLowerCase()
-    );
-
-    return exactMatch?.title || results[0].title;
-  } catch (error) {
-    console.error(`Eroare la căutarea paginii wiki pentru ${characterName}:`, error.message);
-    return null;
-  }
-}
-
-async function getWikiImageUrlByTitle(pageTitle) {
-  const wikiUrl = pageTitleToUrl(pageTitle);
-
-  try {
-    const response = await axios.get(wikiUrl, {
-      headers: { 'User-Agent': 'ParkDex/2.0' },
-    });
-
-    const $ = cheerio.load(response.data);
-    let imageUrl = null;
-
-    const selectors = [
-      'aside.portable-infobox img',
-      '.infobox-image img',
-      '.pi-image-thumbnail',
-      'table.infobox img',
-      '.image img'
-    ];
-
-    for (const selector of selectors) {
-      const imgElement = $(selector).first();
-      if (imgElement.length > 0) {
-        imageUrl = imgElement.attr('data-src') || imgElement.attr('src');
-        if (imageUrl && !imageUrl.includes('sprite')) { 
-            break;
-        }
-      }
+    try {
+        console.log("Se descarcă personajele de la SPAPI...");
+        const response = await axios.get('https://spapi.dev/api/characters?page[size]=50');
+        return response.data.data; 
+    } catch (error) {
+        console.error("Eroare la conectarea cu SPAPI:", error.message);
+        return [];
     }
+}
+async function getWikiImageUrl(characterName) {
+    const formattedName = encodeURIComponent(characterName.replace(/ /g, '_'));
+    const wikiUrl = `https://southpark.wiki.gg/wiki/${formattedName}`;
 
-    return {
-      imageUrl: normalizeImageUrl(imageUrl),
-      wikiUrl,
-      reason: imageUrl ? 'Imagine găsită cu succes' : 'Pagina nu conține o poză în infobox',
-    };
-  } catch (error) {
-    if (error.response?.status === 404) {
-      return { imageUrl: null, wikiUrl, reason: 'Pagina Wiki nu există' };
+    try {
+        const response = await axios.get(wikiUrl);
+        const $ = cheerio.load(response.data);
+        let imageUrl = $('.infobox img').first().attr('src') || 
+                       $('.pi-image-thumbnail').first().attr('src');
+
+        if (imageUrl) {
+            if (imageUrl.startsWith('//')) {
+                imageUrl = 'https:' + imageUrl;
+            }
+            return imageUrl;
+        }
+        return null;
+    } catch (error) {
+        return null;
     }
     return { imageUrl: null, wikiUrl, reason: `Eroare HTTP: ${error.message}` };
   }
-}
 
 async function resolveCharacterAsset(character) {
   const id = character.id;
@@ -162,30 +108,31 @@ async function resolveCharacterAsset(character) {
 }
 
 async function main() {
-  const characters = await fetchCharactersFromAPI();
+    const characters = await fetchCharactersFromAPI();
+    const characterMap = {};
 
-  if (!characters.length) {
-    console.log('Eroare: Nu s-au putut prelua personajele din API.');
-    return;
-  }
+    console.log(`Am găsit ${characters?.length || 0} personaje. Începem căutarea pozelor...`);
 
-  console.log(`Am găsit ${characters.length} personaje. Să înceapă magia...`);
-  const characterMap = {};
+    if (!characters || characters.length === 0) {
+        console.log("Nu am primit date valide de la API.");
+        return;
+    }
 
-  for (const character of characters) {
-    const asset = await resolveCharacterAsset(character);
-    
-    characterMap[String(asset.id)] = {
-      name: asset.name,
-      imageUrl: asset.imageUrl,
-      wikiUrl: asset.wikiUrl
-    };
-
-    const statusIcon = asset.imageUrl === PLACEHOLDER_IMAGE ? 'NOK' : 'OK';
-    console.log(`${statusIcon} [${asset.id}] ${asset.name} -> ${asset.wikiTitle || 'N/A'}`);
-
-    await sleep(200); // Pauză mică să nu supărăm serverele Wiki
-  }
+    for (let char of characters) {
+        const id = char.id;
+        const name = char.attributes?.name || char.name; 
+        if (!name) {
+            console.log(`[Avertisment] Am sărit peste un obiect fără nume (ID: ${id})`);
+            continue;
+        }
+        const imageUrl = await getWikiImageUrl(name);
+        characterMap[id] = {
+            name: name,
+            imageUrl: imageUrl || "https://upload.wikimedia.org/wikipedia/commons/8/89/Portrait_Placeholder.png"
+        };
+        console.log(`[ID: ${id}] ${name} -> ${imageUrl ? 'Poză găsită!' : 'Fără poză, s-a pus placeholder.'}`);
+        await new Promise(resolve => setTimeout(resolve, 200));
+    }
 
   const dir = './src/data';
   if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
