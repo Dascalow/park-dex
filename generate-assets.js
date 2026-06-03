@@ -4,9 +4,22 @@ const fs = require('fs');
 
 async function fetchCharactersFromAPI() {
     try {
-        console.log("Se descarcă personajele de la SPAPI...");
-        const response = await axios.get('https://spapi.dev/api/characters?page[size]=50');
-        return response.data.data; 
+        console.log("Se descarcă personajele de la SPAPI (din mai multe pagini)...");
+        const pageRequests = [];
+        for (let i = 1; i <= 20; i++) {
+            pageRequests.push(axios.get(`https://spapi.dev/api/characters?page=${i}`));
+        }
+        
+        const responses = await Promise.all(pageRequests);
+        let allCharacters = [];
+        
+        responses.forEach(response => {
+            if (response.data && response.data.data) {
+                allCharacters = allCharacters.concat(response.data.data);
+            }
+        });
+        
+        return allCharacters; 
     } catch (error) {
         console.error("Eroare la conectarea cu SPAPI:", error.message);
         return [];
@@ -19,18 +32,26 @@ async function getWikiImageUrl(characterName) {
     try {
         const response = await axios.get(wikiUrl);
         const $ = cheerio.load(response.data);
+        
         let imageUrl = $('.infobox img').first().attr('src') || 
-                       $('.pi-image-thumbnail').first().attr('src');
+                       $('.pi-image-thumbnail').first().attr('src') ||
+                       $('table.infobox img').first().attr('src') ||
+                       $('.image img').first().attr('src');
 
         if (imageUrl) {
             if (imageUrl.startsWith('//')) {
                 imageUrl = 'https:' + imageUrl;
+            } else if (imageUrl.startsWith('/')) {
+                imageUrl = 'https://southpark.wiki.gg' + imageUrl;
             }
-            return imageUrl;
+            return { url: imageUrl, reason: 'Găsită' };
         }
-        return null;
+        return { url: null, reason: 'Pagina există, dar fără o poză principală detectată' };
     } catch (error) {
-        return null;
+        if (error.response && error.response.status === 404) {
+            return { url: null, reason: 'Pagina Wiki nu există sub acest nume exact' };
+        }
+        return { url: null, reason: 'Eroare de conexiune' };
     }
 }
 
@@ -45,19 +66,36 @@ async function main() {
         return;
     }
 
+    // Dicționar pentru excepții: "Nume API" : "Nume exact pe Wiki"
+    const nameOverrides = {
+        "Fluffy": "Fluffy (pig)",
+        "Timmy": "Timmy Burch",
+        "Jimmy": "Jimmy Valmer",
+        "Chef": "Jerome \"Chef\" McElroy",
+        "Garrison": "Herbert Garrison",
+        "Mr. Garrison": "Herbert Garrison",
+        "Token": "Tolkien Black",
+        "Token Black": "Tolkien Black",
+        "Florence Cartman" : "Florence_Cartamn"
+    };
+
     for (let char of characters) {
         const id = char.id;
-        const name = char.attributes?.name || char.name; 
+        const name = (char.attributes?.name || char.name || "").trim(); 
         if (!name) {
             console.log(`[Avertisment] Am sărit peste un obiect fără nume (ID: ${id})`);
             continue;
         }
-        const imageUrl = await getWikiImageUrl(name);
+        
+        // Folosim numele din dicționar dacă există, altfel numele standard
+        const searchName = nameOverrides[name] || name;
+        const result = await getWikiImageUrl(searchName);
+        const imageUrl = result.url;
         characterMap[id] = {
             name: name,
             imageUrl: imageUrl || "https://upload.wikimedia.org/wikipedia/commons/8/89/Portrait_Placeholder.png"
         };
-        console.log(`[ID: ${id}] ${name} -> ${imageUrl ? 'Poză găsită!' : 'Fără poză, s-a pus placeholder.'}`);
+        console.log(`[ID: ${id}] ${name} -> ${imageUrl ? '✅ Poză găsită!' : `❌ Placeholder (${result.reason})`}`);
         await new Promise(resolve => setTimeout(resolve, 200));
     }
 
