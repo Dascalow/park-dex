@@ -9,9 +9,8 @@ const Tab = createBottomTabNavigator();
 export default function TabNavigator() {
   return (
     <Tab.Navigator screenOptions={{ 
-        headerShown: true,
-        tabBarActiveTintColor: '#e74c3c', 
-        tabBarInactiveTintColor: 'gray',
+        headerShown: false, 
+        tabBarStyle: { display: 'none' },
       }}
     >
       <Tab.Screen name="Explorer" component={HomeScreen} />
