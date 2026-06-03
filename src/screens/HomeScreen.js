@@ -37,9 +37,14 @@ export default function HomeScreen({ navigation }) {
 };
   const fetchCharacters = async () => {
     try {
-      const response = await fetch('https://spapi.dev/api/characters');
-      const json = await response.json();
-      setCharacters(json.data); 
+      const requests = Array.from({ length: 20 }, (_, i) => 
+        fetch(`https://spapi.dev/api/characters?page=${i + 1}`).then(res => res.json())
+      );
+      
+      const results = await Promise.all(requests);
+      const allCharacters = results.flatMap(json => json.data || []);
+      
+      setCharacters(allCharacters); 
     } catch (error) {
       console.error("Eroare la preluarea datelor:", error);
     } finally {
