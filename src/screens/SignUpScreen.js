@@ -1,8 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
 import { createUserWithEmailAndPassword } from "firebase/auth";
+import { doc, setDoc } from 'firebase/firestore';
 import { useState } from 'react';
 import { KeyboardAvoidingView, Platform, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import { auth } from '../firebaseConfig';
+import { auth, db } from '../firebaseConfig';
 
 export default function SignUpScreen({ navigation }) {
   const [username, setUsername] = useState('');
@@ -33,7 +34,16 @@ export default function SignUpScreen({ navigation }) {
 
     try {
       const email = `${username}@parkdex.com`; 
-      await createUserWithEmailAndPassword(auth, email, password);
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      
+      await setDoc(doc(db, "users", userCredential.user.uid), {
+        charactersCollected: 0,
+        cheesyPoofs: 0,
+        favorites: [],
+        episodesWatched: 0,
+        achievements: []
+      });
+
       navigation.replace('MainTabs');
     } catch (error) {
       if (error.code === 'auth/email-already-in-use') {
@@ -42,7 +52,9 @@ export default function SignUpScreen({ navigation }) {
         setErrorMessage("A apărut o eroare: " + error.message);
       }
     }
+
   };
+  
 
   return (
     <KeyboardAvoidingView 
@@ -111,7 +123,6 @@ export default function SignUpScreen({ navigation }) {
             <Ionicons name="person-add" size={20} color="#fff" />
           </TouchableOpacity>
 
-          {/* Afișarea erorii sub buton */}
           {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
 
         </View>

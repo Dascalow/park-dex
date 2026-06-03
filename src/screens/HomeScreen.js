@@ -1,6 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
+import { arrayRemove, arrayUnion, doc, getDoc, increment, setDoc } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, FlatList, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { auth, db } from '../firebaseConfig';
+import AccountScreen from './AccountScreen';
 
 import characterAssets from '../data/characters_assets.json';
 
@@ -12,6 +15,26 @@ export default function HomeScreen({ navigation }) {
   
   const [activeTab, setActiveTab] = useState('EXPLORER');
 
+  const toggleFavorite = async (id) => {
+    const isCurrentlyFavorite = favorites.includes(id);
+
+    setFavorites((prevFavorites) => {
+      if (isCurrentlyFavorite) {
+        return prevFavorites.filter((favId) => favId !== id);
+      }
+      return [...prevFavorites, id];
+    });
+
+    const userRef = doc(db, "users", auth.currentUser.uid);
+    try {
+      await setDoc(userRef, { 
+        charactersCollected: increment(isCurrentlyFavorite ? -1 : 1),
+        favorites: isCurrentlyFavorite ? arrayRemove(id) : arrayUnion(id)
+      }, { merge: true });
+    } catch (error) {
+      console.error("Eroare la actualizarea favoritelor:", error);
+    }
+};
   const fetchCharacters = async () => {
     try {
       const response = await fetch('https://spapi.dev/api/characters');
@@ -26,15 +49,41 @@ export default function HomeScreen({ navigation }) {
 
   useEffect(() => {
     fetchCharacters();
+    
+    const fetchUserFavorites = async () => {
+      const userRef = doc(db, "users", auth.currentUser.uid);
+      const docSnap = await getDoc(userRef);
+      if (docSnap.exists() && docSnap.data().favorites) {
+        setFavorites(docSnap.data().favorites);
+      }
+    };
+    fetchUserFavorites();
   }, []);
 
-  const toggleFavorite = (id) => {
-    setFavorites((prevFavorites) => {
-      if (prevFavorites.includes(id)) {
-        return prevFavorites.filter((favId) => favId !== id);
+  const handleViewDex = async (item, imageUrl) => {
+    try {
+      const userRef = doc(db, "users", auth.currentUser.uid);
+      
+      const charName = (item.attributes?.name || item.name || "").toLowerCase();
+      let newBadge = null;
+      
+      if (charName.includes("cartman")) newBadge = "RESPECT MY AUTHORITAH!";
+      else if (charName.includes("kenny")) newBadge = "YOU BASTARD!";
+      else if (charName.includes("towelie")) newBadge = "DON'T FORGET YOUR TOWEL!";
+      else if (charName.includes("randy")) newBadge = "I THOUGHT THIS WAS AMERICA!";
+      else if (charName.includes("butters")) newBadge = "OH, HAMBURGERS!";
+
+      const updates = { cheesyPoofs: increment(1) };
+      if (newBadge) {
+        updates.achievements = arrayUnion(newBadge); // Adaugă insigna în listă dacă nu o are deja
       }
-      return [...prevFavorites, id];
-    });
+
+      await setDoc(userRef, updates, { merge: true });
+    } catch (error) {
+      console.error("Eroare la incrementarea cheesy poofs:", error);
+    }
+    
+    navigation.navigate('CharacterDetails', { character: item, imageUrl: imageUrl });
   };
 
   const renderCharacterCard = ({ item }) => {
@@ -78,7 +127,7 @@ export default function HomeScreen({ navigation }) {
         <TouchableOpacity 
           style={styles.viewDexButton} 
           activeOpacity={0.7}
-          onPress={() => navigation.navigate('CharacterDetails', { character: item, imageUrl: imageUrl })}
+          onPress={() => handleViewDex(item, imageUrl)}
         >
           <Ionicons name="eye" size={16} color="#000" style={{ marginRight: 5 }} />
           <Text style={styles.viewDexText}>VIEW DEX</Text>
@@ -152,7 +201,9 @@ export default function HomeScreen({ navigation }) {
             <Text style={styles.emptyStateText}>Nu ai adăugat niciun personaj la favorite.</Text>
             <Text style={styles.emptyStateSubtext}>Mergi în Explorer și apasă pe inimi!</Text>
           </View>
-        ) : activeTab === 'ACCOUNT' || activeTab === 'SETTINGS' ? (
+        ) : activeTab === 'ACCOUNT' ? (
+          <AccountScreen />
+        ) : activeTab === 'SETTINGS' ? (
            <View style={styles.emptyState}>
             <Ionicons name="construct-outline" size={60} color="#ccc" />
             <Text style={styles.emptyStateText}>Ecran în construcție...</Text>

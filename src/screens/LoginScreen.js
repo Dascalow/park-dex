@@ -23,7 +23,6 @@ export default function LoginScreen({ navigation }) {
       await signInWithEmailAndPassword(auth, email, password);
       navigation.replace('MainTabs');
     } catch (error) {
-      // Afișăm eroarea direct în state pentru a fi redată pe ecran
       if (error.code === 'auth/invalid-credential') {
         setErrorMessage("Username sau cod secret incorect!");
       } else {
