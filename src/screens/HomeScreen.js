@@ -1,12 +1,12 @@
 import { Ionicons } from '@expo/vector-icons';
 import { arrayRemove, arrayUnion, doc, increment, onSnapshot, setDoc } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, FlatList, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, FlatList, Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import characterAssets from '../data/characters_assets.json';
 import { auth, db } from '../firebaseConfig';
 import AccountScreen from './AccountScreen';
 import SettingsScreen from './SettingsScreen';
-
+ 
 export default function HomeScreen({ navigation }) {
   const [characters, setCharacters] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -21,6 +21,9 @@ export default function HomeScreen({ navigation }) {
   const [appTheme, setAppTheme] = useState('LIGHT');
 
   const [displayName, setDisplayName] = useState('DOUCHEBAG');
+
+  const [searchQuery, setSearchQuery] = useState('');
+
   const toggleFavorite = async (id) => {
     const isCurrentlyFavorite = favorites.includes(id);
 
@@ -55,7 +58,11 @@ export default function HomeScreen({ navigation }) {
       const totalPages = firstJson.meta?.last_page || 1; 
 
       for (let i = 2; i <= totalPages; i++) {
+
+        if (i === 21 || i === 22) continue;
+
         const res = await fetch(`https://spapi.dev/api/characters?page=${i}`);
+        
         
         if (res.ok) {
           const json = await res.json();
@@ -133,7 +140,7 @@ export default function HomeScreen({ navigation }) {
       console.error("Eroare la incrementarea cheesy poofs:", error);
     }
     
-    navigation.navigate('CharacterDetails', { character: item, imageUrl: imageUrl });
+    navigation.navigate('CharacterDetails', { character: item, imageUrl: imageUrl, currentTheme: appTheme });
   };
 
   const renderCharacterCard = ({ item }) => {
@@ -199,10 +206,15 @@ export default function HomeScreen({ navigation }) {
     ? characters.filter(char => favorites.includes(char.id))
     : characters;
 
-  const totalPages = Math.ceil(displayedCharacters.length / itemsPerPage) || 1;
+  const filteredCharacters = displayedCharacters.filter(char => {
+      const charName = char.attributes?.name || char.name || '';
+      return charName.toLowerCase().includes(searchQuery.toLowerCase());
+    });
+
+  const totalPages = Math.ceil(filteredCharacters.length / itemsPerPage) || 1;
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentItems = displayedCharacters.slice(indexOfFirstItem, indexOfLastItem);
+  const currentItems = filteredCharacters.slice(indexOfFirstItem, indexOfLastItem);
 
   const themeStyles = {
     backgroundColor: appTheme === 'DARK' ? '#222' : appTheme === 'CLASSIC' ? '#f4d03f' : '#f5f5f5',
@@ -272,6 +284,49 @@ export default function HomeScreen({ navigation }) {
            <SettingsScreen currentTheme={appTheme} onThemeChange={setAppTheme} />
         ) : (
           <View style={{ flex: 1 }}>
+            
+            <View style={{ 
+              paddingHorizontal: 20, 
+              paddingTop: 15, 
+              paddingBottom: 15, // Schimbăm din margin în padding pentru a crea o mască solidă
+              backgroundColor: themeStyles.backgroundColor, // Ia culoarea temei și blochează vizual ce e în spate
+              zIndex: 10, // Forțează bara să stea la suprafață, deasupra listei
+              elevation: 10 // Siguranță suplimentară pentru Android
+            }}>
+              <View style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                borderWidth: 3,
+                borderColor: themeStyles.textColor,
+                backgroundColor: appTheme === 'DARK' ? '#333' : '#fff',
+                paddingHorizontal: 15,
+                paddingVertical: 10
+              }}>
+                <Ionicons name="search" size={20} color={themeStyles.textColor} style={{ marginRight: 10 }} />
+                <TextInput 
+                  style={{
+                    flex: 1,
+                    fontSize: 14,
+                    fontWeight: 'bold',
+                    color: themeStyles.textColor,
+                    outlineStyle: 'none' 
+                  }}
+                  placeholder="CAUTĂ UN CETĂȚEAN..."
+                  placeholderTextColor={appTheme === 'DARK' ? '#888' : '#666'}
+                  value={searchQuery}
+                  onChangeText={(text) => {
+                    setSearchQuery(text);
+                    setCurrentPage(1); 
+                  }}
+                />
+                {searchQuery.length > 0 && (
+                  <TouchableOpacity onPress={() => setSearchQuery('')}>
+                    <Ionicons name="close-circle" size={20} color={themeStyles.textColor} />
+                  </TouchableOpacity>
+                )}
+              </View>
+            </View>
+
             <FlatList
               data={currentItems}
               keyExtractor={(item) => item.id.toString()}

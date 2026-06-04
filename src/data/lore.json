@@ -1,0 +1,222 @@
+{
+  "eric cartman": {
+    "tags": ["STUDENT", "ANTAGONIST"],
+    "shortDesc": "The foul-mouthed, manipulative, and deeply flawed fourth grader who often serves as the main antagonist among the central group of boys.",
+    "bio": "Eric Theodore Cartman is one of the main characters of the series, along with Stan Marsh, Kyle Broflovski, and Kenny McCormick. Cartman is sometimes portrayed as an antagonist or antihero.\n\nHe is an obese, racist, sexist, anti-semitic, sociopathic, narcissistic, and spoiled fourth grader living with his single mother. Despite his numerous flaws, he is highly intelligent and capable of executing complex plans to achieve his goals.",
+    "alias": "The Coon",
+    "age": "10",
+    "grade": "4th",
+    "voicedBy": "Trey Parker",
+    "stats": { "Cursing": 98, "Manipulation": 100, "Empathy": 2, "Athleticism": 15 },
+    "quotes": ["Screw you guys, I'm going home.", "Respect my authoritah!", "Whatever, I do what I want!"]
+  },
+  "stan marsh": {
+    "tags": ["STUDENT", "LEADER"],
+    "shortDesc": "The normal, average, everyday kid who serves as the moral anchor and protagonist of the group.",
+    "bio": "Stanley 'Stan' Marsh is best friends with Kyle Broflovski, and their relationship drives many episodes. He is level-headed, cynical, and often summarizes the lesson of the episode with his famous 'You know, I learned something today' speech.\n\nStan frequently gets dragged into crazy situations by his father Randy or tortured by his older sister Shelly.",
+    "alias": "Toolshed",
+    "age": "10",
+    "grade": "4th",
+    "voicedBy": "Trey Parker",
+    "stats": { "Cursing": 65, "Manipulation": 40, "Empathy": 85, "Athleticism": 75 },
+    "quotes": ["Oh my God, they killed Kenny!", "You know, I've learned something today.", "Dude, this is pretty messed up."]
+  },
+  "kyle broflovski": {
+    "tags": ["STUDENT", "SAGE"],
+    "shortDesc": "The highly intelligent, easily outraged, and deeply moral voice of reason who constantly battles Cartman.",
+    "bio": "Kyle Broflovski comes from a devout Jewish family, making him the prime target for Cartman's endless anti-semitic insults. Kyle is extremely protective of his adoptive brother Ike and is prone to intense philosophical or moral outbursts when he sees injustice.",
+    "alias": "Human Kite",
+    "age": "10",
+    "grade": "4th",
+    "voicedBy": "Matt Stone",
+    "stats": { "Cursing": 70, "Manipulation": 35, "Empathy": 90, "Athleticism": 70 },
+    "quotes": ["You bastards!", "Shut up, fatass!", "Cartman, you are a horrible, sociopathic monster!"]
+  },
+  "kenny mccormick": {
+    "tags": ["STUDENT", "IMMORTAL"],
+    "shortDesc": "The muffled, orange-parka wearing fourth grader who is famous for dying in almost every early episode.",
+    "bio": "Kenny McCormick is one of the four main characters. He is easily recognizable by his bright orange parka that covers his mouth, causing his speech to be completely muffled.\n\nKenny comes from a deeply impoverished family, which makes him the constant target of Cartman's jokes. Unbeknownst to his friends, Kenny possesses a cosmic curse of immortality due to his parents attending Cthulhu cult meetings.",
+    "alias": "Mysterion",
+    "age": "10",
+    "grade": "4th",
+    "voicedBy": "Matt Stone",
+    "stats": { "Cursing": 85, "Manipulation": 30, "Empathy": 90, "Athleticism": 75 },
+    "quotes": ["(Muffled) Mmmph rmph rmmph!", "I can't die! I've died countless times and I always wake up in my bed!", "Don't worry guys, Mysterion is here."]
+  },
+  "leopold \"butters\" stotch": {
+    "tags": ["STUDENT", "INNOCENT"],
+    "shortDesc": "The sweet, naive, and constantly grounded fourth grader who is easily manipulated by everyone.",
+    "bio": "Butters Stotch is the most sweet-natured and gullible kid in South Park. Unlike the other boys, he is cheerful, optimistic, and maintains a sense of childlike innocence.\n\nUnfortunately, this makes him the prime target for Cartman's cruel pranks and manipulations. His parents are absurdly strict, often grounding him for the most minor or ridiculous things.",
+    "alias": "Professor Chaos",
+    "age": "10",
+    "grade": "4th",
+    "voicedBy": "Matt Stone",
+    "stats": { "Cursing": 5, "Manipulation": 12, "Empathy": 100, "Athleticism": 40 },
+    "quotes": ["Oh, hamburgers!", "I'm Professor Chaos! Bringer of destruction!", "Loo loo loo, I've got some apples..."]
+  },
+  "randy marsh": {
+    "tags": ["ADULT", "CHAOTIC"],
+    "shortDesc": "Stan's incredibly dramatic, over-enthusiastic, and utterly chaotic father who steals every scene.",
+    "bio": "Randy Marsh is a geologist turned weed farmer (Tegridy Farms). He represents the ultimate satire of American adult behavior. Randy gets dangerously obsessed with everything he tries—from cooking shows and internet porn to becoming a pop star named Lorde.",
+    "alias": "Lorde / Steamy Nicks",
+    "age": "45",
+    "grade": "Adult",
+    "voicedBy": "Trey Parker",
+    "stats": { "Cursing": 92, "Manipulation": 75, "Empathy": 30, "Athleticism": 60 },
+    "quotes": ["I thought this was America!", "Hey Stan... can you hand me a beer?", "It's called a tasting, Sharon, and it's elegant!"]
+  },
+  "mr. garrison": {
+    "tags": ["ADULT", "UNPREDICTABLE"],
+    "shortDesc": "The boys' volatile fourth-grade teacher who undergoes multiple identity crises and eventually becomes President.",
+    "bio": "Herbert Garrison is one of the most unstable and cynical adults in town. Guided for years by his hand puppet, Mr. Hat, Garrison goes through massive personal changes before entering politics and running a chaotic parody campaign for President of the United States.",
+    "alias": "President Garrison / Mr. Hat",
+    "age": "52",
+    "grade": "Adult",
+    "voicedBy": "Trey Parker",
+    "stats": { "Cursing": 95, "Manipulation": 80, "Empathy": 15, "Athleticism": 50 },
+    "quotes": ["You can go mmm-kay!", "Get out of my classroom!", "Where has my country gone?!"]
+  },
+  "wendy testaburger": {
+    "tags": ["STUDENT", "ACTIVIST"],
+    "shortDesc": "The brilliant, feminist voice of reason in the school and Stan's on-and-off girlfriend.",
+    "bio": "Wendy Testaburger is the most politically aware and progressive student at South Park Elementary. She serves as the president of the student council and isn't afraid to beat up Cartman when his insults go too far.",
+    "alias": "Call Girl",
+    "age": "10",
+    "grade": "4th",
+    "voicedBy": "April Stewart",
+    "stats": { "Cursing": 50, "Manipulation": 60, "Empathy": 85, "Athleticism": 80 },
+    "quotes": ["Don't you ever make fun of breast cancer again!", "Stan, we need to talk.", "Cartman, you are a pathetic child."]
+  },
+  "chef": {
+    "tags": ["ADULT", "MENTOR"],
+    "shortDesc": "The beloved school cafeteria cook who gives the boys hilarious, soulful, and musical life advice.",
+    "bio": "Jerome 'Chef' McElroy was the only adult the boys actually trusted. He was famous for bursting into smooth, sensual R&B songs about adult topics whenever the kids asked simple questions about life.",
+    "alias": "The Chef",
+    "age": "Deceased",
+    "grade": "Adult",
+    "voicedBy": "Isaac Hayes",
+    "stats": { "Cursing": 40, "Manipulation": 10, "Empathy": 95, "Athleticism": 65 },
+    "quotes": ["Hello children!", "Damn right!", "There's a time and a place for everything, and it's called college."]
+  },
+  "mr. mackey": {
+    "tags": ["ADULT", "COUNSELOR"],
+    "shortDesc": "The school guidance counselor with an unnaturally massive head and a severe speech impediment.",
+    "bio": "Mr. Mackey handles discipline and mental health at South Park Elementary. He ends almost every single sentence with the phrase 'm'kay'. He is highly stressed and deeply paranoid about drugs and minor rule-breaking.",
+    "alias": "M'kay Man",
+    "age": "48",
+    "grade": "Adult",
+    "voicedBy": "Trey Parker",
+    "stats": { "Cursing": 10, "Manipulation": 20, "Empathy": 75, "Athleticism": 30 },
+    "quotes": ["Drugs are bad, m'kay?", "You shouldn't do bad things, m'kay?", "That's a detention, m'kay."]
+  },
+  "ike broflovski": {
+    "tags": ["TODDLER", "CANADIAN"],
+    "shortDesc": "Kyle's genius, adopted Canadian baby brother whose head splits in half when he talks.",
+    "bio": "Ike Broflovski (born Peter Gintz) was adopted by the Broflovski family. Despite being a toddler, Ike is a certified genius, has a fully active sex life in later seasons, and has served as a general in the Canadian army. Kyle loves kicking him like a football.",
+    "alias": "Kick the Baby",
+    "age": "5",
+    "grade": "Kindergarten",
+    "voicedBy": "Various Child Actors",
+    "stats": { "Cursing": 80, "Manipulation": 50, "Empathy": 60, "Athleticism": 45 },
+    "quotes": ["Don't kick the baby!", "Kick the baby!", "Don't tase me, bro!"]
+  },
+  "craig tucker": {
+    "tags": ["STUDENT", "STOIC"],
+    "shortDesc": "The deadpan, cynical leader of the rival boy group who is famous for flipping people off.",
+    "bio": "Craig Tucker wears a signature blue chullo hat and speaks in a completely monotone voice. He hates the main boys' crazy adventures because they always ruin his normal days. He is in a relationship with Tweek.",
+    "alias": "Super Craig",
+    "age": "10",
+    "grade": "4th",
+    "voicedBy": "Matt Stone",
+    "stats": { "Cursing": 80, "Manipulation": 40, "Empathy": 50, "Athleticism": 70 },
+    "quotes": ["If I had a dollar for every time...',", "F*** you guys.", "I would be so happy."]
+  },
+  "tweek tweak": {
+    "tags": ["STUDENT", "NEUROTIC"],
+    "shortDesc": "A hyperactive, anxious fourth grader fueled by massive amounts of caffeine from his parents' coffee shop.",
+    "bio": "Tweek Tweak is constantly twitching, pulling his hair, and screaming in terror about global warming or North Korea. His parents constantly feed him coffee to calm him down, which only makes his extreme paranoia much worse.",
+    "alias": "Wonder Tweek",
+    "age": "10",
+    "grade": "4th",
+    "voicedBy": "Matt Stone",
+    "stats": { "Cursing": 40, "Manipulation": 10, "Empathy": 80, "Athleticism": 65 },
+    "quotes": ["Oh man! Too much pressure!", "GAH! They're gonna get me!", "What if North Korea nukes us?!"]
+  },
+  "tolkien black": {
+    "tags": ["STUDENT", "WEALTHY"],
+    "shortDesc": "The richest kid in school who was secretly named after J.R.R. Tolkien all along.",
+    "bio": "Tolkien Black (formerly thought by Stan to be Token) is the son of South Park's only wealthy black family. He is incredibly talented, plays multiple instruments, and often provides a classy contrast to Cartman's absolute stupidity.",
+    "alias": "Tupperware",
+    "age": "10",
+    "grade": "4th",
+    "voicedBy": "Adrien Beard",
+    "stats": { "Cursing": 30, "Manipulation": 40, "Empathy": 80, "Athleticism": 85 },
+    "quotes": ["My name is spelled T-O-L-K-I-E-N!", "Cartman, I'm going to sue you.", "You guys are absolute idiots."]
+  },
+  "jimmy valmer": {
+    "tags": ["STUDENT", "COMEDIAN"],
+    "shortDesc": "The handicapped stand-up comedian kid who never lets his stutter ruin a good joke.",
+    "bio": "Jimmy Valmer uses crutches due to muscular dystrophy, but he is one of the most athletic and positive kids in the class. His ultimate dream is to be a professional comedian, and he hosts every major school event with pride.",
+    "alias": "Fastpass",
+    "age": "10",
+    "grade": "4th",
+    "voicedBy": "Trey Parker",
+    "stats": { "Cursing": 50, "Manipulation": 65, "Empathy": 85, "Athleticism": 90 },
+    "quotes": ["Wow, what a great audience!", "Have you s-s-seen this?", "You are a c-c-c... continuous source of inspiration."]
+  },
+  "timmy burch": {
+    "tags": ["STUDENT", "ICONIC"],
+    "shortDesc": "The wheelchair-bound fourth grader whose vocabulary consists almost entirely of his own name.",
+    "bio": "Timmy Burch suffers from a combination of paralysis and Tourette's. Despite only shouting 'TIMMY!' and the name of his pet turkey 'GOBBLES!', Timmy is highly expressive, intelligent, and led a successful heavy metal rock band.",
+    "alias": "Iron Timmy",
+    "age": "10",
+    "grade": "4th",
+    "voicedBy": "Trey Parker",
+    "stats": { "Cursing": 20, "Manipulation": 30, "Empathy": 70, "Athleticism": 80 },
+    "quotes": ["TIMMY!", "GOBBLES!", "LIVIN' DE LIE-DA!"]
+  },
+  "clyde donovan": {
+    "tags": ["STUDENT", "CASANOVA"],
+    "shortDesc": "The generic, emotional fourth grader who ranks himself as the second coolest kid in school.",
+    "bio": "Clyde Donovan is deeply emotional, frequently crying when insulted. He is obsessed with girls, sports, and being popular, but his laziness often lands him in trouble. He once accidentally caused his mother's death by leaving the toilet seat up.",
+    "alias": "Mosquito",
+    "age": "10",
+    "grade": "4th",
+    "voicedBy": "Trey Parker",
+    "stats": { "Cursing": 60, "Manipulation": 45, "Empathy": 60, "Athleticism": 70 },
+    "quotes": ["I'm not crying, you're crying!", "Girls like guys who are sensitive.", "Oh man, my dad is gonna kill me."]
+  },
+  "liane cartman": {
+    "tags": ["ADULT", "NURTURING"],
+    "shortDesc": "Eric Cartman's hyper-permissive and sweet single mother with a notorious secret past.",
+    "bio": "Liane Cartman completely spoils Eric, catering to his every ridiculous demand and calling him her 'sweet little angel'. In early seasons, she was famous for sleeping with literally every adult in the town (and some aliens).",
+    "alias": "Mrs. Cartman",
+    "age": "40",
+    "grade": "Adult",
+    "voicedBy": "April Stewart",
+    "stats": { "Cursing": 20, "Manipulation": 10, "Empathy": 95, "Athleticism": 40 },
+    "quotes": ["Who wants Cheesy Poofs?", "Eric, sweetie, time for bed!", "Oh my..."]
+  },
+  "gerald broflovski": {
+    "tags": ["ADULT", "LAWYER"],
+    "shortDesc": "Kyle's father, a professional lawyer who secretly runs a devastating global internet troll ring.",
+    "bio": "Gerald Broflovski is a seemingly normal, pleasant father who wears a public persona of high ethics. However, under the username 'Skankhunt42', Gerald gets a sick thrill out of brutally trolling women and celebrities on the internet, almost starting a world war.",
+    "alias": "Skankhunt42",
+    "age": "46",
+    "grade": "Adult",
+    "voicedBy": "Matt Stone",
+    "stats": { "Cursing": 75, "Manipulation": 85, "Empathy": 40, "Athleticism": 50 },
+    "quotes": ["It's just satire!", "I am a respected lawyer in this town.", "Kyle, your mother is right."]
+  },
+  "sheila broflovski": {
+    "tags": ["ADULT", "CRUSADER"],
+    "shortDesc": "Kyle's overprotective, loud, and aggressive mother who starts national boycotts over everything.",
+    "bio": "Sheila Broflovski is a massive force of outrage in South Park. The moment she hears about anything inappropriate for children, she sings her war cry 'WHAT, WHAT, WHAT?!' and forms angry mobs, famously starting a war with Canada over a movie.",
+    "alias": "The Horrible Jersey Mom",
+    "age": "44",
+    "grade": "Adult",
+    "voicedBy": "Mona Marshall",
+    "stats": { "Cursing": 80, "Manipulation": 70, "Empathy": 60, "Athleticism": 45 },
+    "quotes": ["WHAT, WHAT, WHAT?!", "This is completely unacceptable!", "Blame Canada!"]
+  }
+}
