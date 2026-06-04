@@ -3,6 +3,7 @@ import { arrayRemove, arrayUnion, doc, increment, onSnapshot, setDoc } from 'fir
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, FlatList, Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import characterAssets from '../data/characters_assets.json';
+import loreData from '../data/lore.json';
 import { auth, db } from '../firebaseConfig';
 import AccountScreen from './AccountScreen';
 import SettingsScreen from './SettingsScreen';
@@ -153,9 +154,24 @@ export default function HomeScreen({ navigation }) {
 
     const attributes = item.attributes || {};
     const characterName = attributes.name || item.name || "Unknown";
-    const tag1 = attributes.sex || "UNKNOWN";
-    const tag2 = attributes.occupation || "RESIDENT";
     const isFavorite = favorites.includes(item.id);
+
+    // --- LOGICA NOUĂ PENTRU TAG-URI (Sincronizată) ---
+    const charNameLower = characterName.toLowerCase();
+    const hasCustomLore = loreData[charNameLower];
+    
+    let tag1 = "UNKNOWN";
+    let tag2 = "RESIDENT";
+
+    if (hasCustomLore && hasCustomLore.tags) {
+      // Dacă există în lore.json, luăm tag-urile noastre custom (ex: STUDENT, ANTAGONIST)
+      tag1 = hasCustomLore.tags[0] || "UNKNOWN";
+      tag2 = hasCustomLore.tags[1] || "RESIDENT";
+    } else {
+      // Dacă e personaj secundar, luăm din API
+      tag1 = attributes.sex ? attributes.sex.toUpperCase() : "UNKNOWN";
+      tag2 = attributes.occupation ? attributes.occupation.toUpperCase() : "RESIDENT";
+    }
 
     return (
       <View style={styles.card}>
@@ -170,14 +186,15 @@ export default function HomeScreen({ navigation }) {
               <Ionicons 
                 name={isFavorite ? "heart" : "heart-outline"} 
                 size={22} 
-                color={isFavorite ? "#c0392b" : "#000"} 
+                color={isFavorite ? "#c0392b" : themeStyles.textColor} 
               />
             </TouchableOpacity>
           </View>
           
+          {/* Tag-urile corectate */}
           <View style={styles.tagsContainer}>
-            <View style={styles.tag}><Text style={styles.tagText}>{tag1.toUpperCase()}</Text></View>
-            <View style={styles.tag}><Text style={styles.tagText}>{tag2.toUpperCase()}</Text></View>
+            <View style={styles.tag}><Text style={styles.tagText}>{tag1}</Text></View>
+            <View style={styles.tag}><Text style={styles.tagText}>{tag2}</Text></View>
           </View>
         </View>
 

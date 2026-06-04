@@ -96,10 +96,6 @@ export default function LoginScreen({ navigation }) {
 
           {/* Mesajul de eroare vizibil aici */}
           {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
-
-          <TouchableOpacity style={styles.forgotButton}>
-            <Text style={styles.forgotText}>FORGOT CODE?</Text>
-          </TouchableOpacity>
         </View>
       </View>
     </KeyboardAvoidingView>

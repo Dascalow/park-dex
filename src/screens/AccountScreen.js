@@ -73,7 +73,7 @@ export default function AccountScreen({ currentTheme }) {
   return (
     <View style={[styles.container, { backgroundColor: bgColor }]}>
       <View style={styles.profileHeader}>
-        <View style={[styles.avatar, { borderColor: textColor }]}><Text style={{fontSize: 40}}>👦🏼</Text></View>
+        <View style={[styles.avatar, { borderColor: textColor }]}><Text style={{fontSize: 40}}></Text></View>
         <Text style={[styles.username, { color: textColor }]}>{displayName}</Text>
         <Text style={[styles.location, { color: subtextColor }]}>South Park, CO</Text>
       </View>
