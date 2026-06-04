@@ -80,19 +80,32 @@ const fetchCharacters = async () => {
       await AsyncStorage.setItem('cached_characters', JSON.stringify(allChars));
       
     } catch (error) {
-      console.log("Aplicația este OFFLINE sau API-ul a picat. Se încearcă încărcarea datelor salvate local...");
+      console.log("Aplicația este OFFLINE. Se încarcă personajele ȘI datele de utilizator din memoria locală...");
       
       try {
         const cachedData = await AsyncStorage.getItem('cached_characters');
         if (cachedData !== null) {
-          const parsedData = JSON.parse(cachedData);
-          setCharacters(parsedData);
-          console.log(`Succes Offline! Am încărcat ${parsedData.length} personaje din memoria locală.`);
-        } else {
-          console.warn("Nu există date salvate în cache pentru modul offline.");
+          setCharacters(JSON.parse(cachedData));
+        }
+
+        const cachedUserData = await AsyncStorage.getItem('cached_user_data');
+        if (cachedUserData !== null) {
+          const localData = JSON.parse(cachedUserData);
+          
+          if (localData.favorites) setFavorites(localData.favorites);
+          if (localData.settings && localData.settings.theme) setAppTheme(localData.settings.theme);
+          
+          const hideIdentity = localData.settings?.hideIdentity !== undefined ? localData.settings.hideIdentity : true;
+          if (hideIdentity) {
+            setDisplayName("DOUCHEBAG");
+          } else {
+            const realName = auth.currentUser?.email ? auth.currentUser.email.split('@')[0] : "DOUCHEBAG";
+            setDisplayName(realName.toUpperCase());
+          }
+          console.log("Toate datele de utilizator au fost restaurate offline cu succes!");
         }
       } catch (storageErr) {
-        console.error("Eroare la citirea din AsyncStorage:", storageErr);
+        console.error("Eroare la citirea datelor offline:", storageErr);
       }
     } finally {
       setIsLoading(false);
@@ -104,9 +117,14 @@ useEffect(() => {
     if (!auth.currentUser) return;
     const userRef = doc(db, "users", auth.currentUser.uid);
 
-    const unsubscribe = onSnapshot(userRef, (docSnap) => {
+const unsubscribe = onSnapshot(userRef, async (docSnap) => {
       if (docSnap.exists()) {
         const data = docSnap.data();
+        try {
+          await AsyncStorage.setItem('cached_user_data', JSON.stringify(data));
+        } catch (err) {
+          console.log("Eroare la scrierea cache-ului de utilizator:", err);
+        }
 
         if (data.favorites) setFavorites(data.favorites);
       
@@ -169,7 +187,6 @@ useEffect(() => {
     const characterName = attributes.name || item.name || "Unknown";
     const isFavorite = favorites.includes(item.id);
 
-    // --- LOGICA NOUĂ PENTRU TAG-URI (Sincronizată) ---
     const charNameLower = characterName.toLowerCase();
     const hasCustomLore = loreData[charNameLower];
     
@@ -177,11 +194,9 @@ useEffect(() => {
     let tag2 = "RESIDENT";
 
     if (hasCustomLore && hasCustomLore.tags) {
-      // Dacă există în lore.json, luăm tag-urile noastre custom (ex: STUDENT, ANTAGONIST)
       tag1 = hasCustomLore.tags[0] || "UNKNOWN";
       tag2 = hasCustomLore.tags[1] || "RESIDENT";
     } else {
-      // Dacă e personaj secundar, luăm din API
       tag1 = attributes.sex ? attributes.sex.toUpperCase() : "UNKNOWN";
       tag2 = attributes.occupation ? attributes.occupation.toUpperCase() : "RESIDENT";
     }
@@ -204,7 +219,6 @@ useEffect(() => {
             </TouchableOpacity>
           </View>
           
-          {/* Tag-urile corectate */}
           <View style={styles.tagsContainer}>
             <View style={styles.tag}><Text style={styles.tagText}>{tag1}</Text></View>
             <View style={styles.tag}><Text style={styles.tagText}>{tag2}</Text></View>
