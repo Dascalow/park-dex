@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { arrayRemove, arrayUnion, doc, increment, onSnapshot, setDoc } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, FlatList, Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
@@ -46,8 +47,10 @@ export default function HomeScreen({ navigation }) {
     }
   };
 
-  const fetchCharacters = async () => {
+const fetchCharacters = async () => {
     try {
+      setIsLoading(true);
+
       const firstResponse = await fetch('https://spapi.dev/api/characters');
       
       if (!firstResponse.ok) {
@@ -56,15 +59,12 @@ export default function HomeScreen({ navigation }) {
       
       const firstJson = await firstResponse.json();
       let allChars = [...firstJson.data];
-      const totalPages = firstJson.meta?.last_page || 1; 
+      const totalPagesFromApi = firstJson.meta?.last_page || 1; 
 
-      for (let i = 2; i <= totalPages; i++) {
-
+      for (let i = 2; i <= totalPagesFromApi; i++) {
         if (i === 21 || i === 22) continue;
 
         const res = await fetch(`https://spapi.dev/api/characters?page=${i}`);
-        
-        
         if (res.ok) {
           const json = await res.json();
           if (json && json.data) {
@@ -73,19 +73,32 @@ export default function HomeScreen({ navigation }) {
         } else {
           console.warn(`Am ratat pagina ${i} - Status: ${res.status}`);
         }
-        await new Promise(resolve => setTimeout(resolve, 100));
+        await new Promise(resolve => setTimeout(resolve, 500));
       }
 
-      setCharacters(allChars); 
+      setCharacters(allChars);
+      await AsyncStorage.setItem('cached_characters', JSON.stringify(allChars));
       
     } catch (error) {
-      console.error("Eroare la preluarea tuturor datelor:", error);
+      console.log("Aplicația este OFFLINE sau API-ul a picat. Se încearcă încărcarea datelor salvate local...");
+      
+      try {
+        const cachedData = await AsyncStorage.getItem('cached_characters');
+        if (cachedData !== null) {
+          const parsedData = JSON.parse(cachedData);
+          setCharacters(parsedData);
+          console.log(`Succes Offline! Am încărcat ${parsedData.length} personaje din memoria locală.`);
+        } else {
+          console.warn("Nu există date salvate în cache pentru modul offline.");
+        }
+      } catch (storageErr) {
+        console.error("Eroare la citirea din AsyncStorage:", storageErr);
+      }
     } finally {
       setIsLoading(false);
     }
   };
-
-  useEffect(() => {
+useEffect(() => {
     fetchCharacters();
     
     if (!auth.currentUser) return;
