@@ -1,16 +1,16 @@
 import { Ionicons } from '@expo/vector-icons';
-import { arrayRemove, arrayUnion, doc, getDoc, increment, setDoc } from 'firebase/firestore';
+import { arrayRemove, arrayUnion, doc, increment, onSnapshot, setDoc } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, FlatList, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import characterAssets from '../data/characters_assets.json';
 import { auth, db } from '../firebaseConfig';
 import AccountScreen from './AccountScreen';
-
-import characterAssets from '../data/characters_assets.json';
+import SettingsScreen from './SettingsScreen';
 
 export default function HomeScreen({ navigation }) {
   const [characters, setCharacters] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  
+ 
   const [favorites, setFavorites] = useState([]);
   
   const [currentPage, setCurrentPage] = useState(1);
@@ -18,6 +18,9 @@ export default function HomeScreen({ navigation }) {
 
   const [activeTab, setActiveTab] = useState('EXPLORER');
 
+  const [appTheme, setAppTheme] = useState('LIGHT');
+
+  const [displayName, setDisplayName] = useState('DOUCHEBAG');
   const toggleFavorite = async (id) => {
     const isCurrentlyFavorite = favorites.includes(id);
 
@@ -77,14 +80,29 @@ export default function HomeScreen({ navigation }) {
   useEffect(() => {
     fetchCharacters();
     
-    const fetchUserFavorites = async () => {
-      const userRef = doc(db, "users", auth.currentUser.uid);
-      const docSnap = await getDoc(userRef);
-      if (docSnap.exists() && docSnap.data().favorites) {
-        setFavorites(docSnap.data().favorites);
+    if (!auth.currentUser) return;
+    const userRef = doc(db, "users", auth.currentUser.uid);
+
+    const unsubscribe = onSnapshot(userRef, (docSnap) => {
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+
+        if (data.favorites) setFavorites(data.favorites);
+      
+        if (data.settings && data.settings.theme) {
+          setAppTheme(data.settings.theme);
+        }
+        const hideIdentity = data.settings?.hideIdentity !== undefined ? data.settings.hideIdentity : true;
+        if (hideIdentity) {
+          setDisplayName("DOUCHEBAG");
+        } else {
+          const realName = auth.currentUser.email.split('@')[0];
+          setDisplayName(realName.toUpperCase());
+        }
       }
-    };
-    fetchUserFavorites();
+    });
+
+    return () => unsubscribe();
   }, []);
 
   useEffect(() => {
@@ -103,6 +121,7 @@ export default function HomeScreen({ navigation }) {
       else if (charName.includes("towelie")) newBadge = "DON'T FORGET YOUR TOWEL!";
       else if (charName.includes("randy")) newBadge = "I THOUGHT THIS WAS AMERICA!";
       else if (charName.includes("butters")) newBadge = "OH, HAMBURGERS!";
+
 
       const updates = { cheesyPoofs: increment(1) };
       if (newBadge) {
@@ -176,7 +195,6 @@ export default function HomeScreen({ navigation }) {
     );
   }
 
-  // --- AICI SE ÎNTÂMPLĂ MAGIA PAGINĂRII ---
   const displayedCharacters = activeTab === 'FAVORITES' 
     ? characters.filter(char => favorites.includes(char.id))
     : characters;
@@ -186,16 +204,24 @@ export default function HomeScreen({ navigation }) {
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentItems = displayedCharacters.slice(indexOfFirstItem, indexOfLastItem);
 
+  const themeStyles = {
+    backgroundColor: appTheme === 'DARK' ? '#222' : appTheme === 'CLASSIC' ? '#f4d03f' : '#f5f5f5',
+    sidebarColor: appTheme === 'DARK' ? '#111' : appTheme === 'CLASSIC' ? '#f1c40f' : '#f5f5f5',
+    textColor: appTheme === 'DARK' ? '#fff' : '#000',
+    subtitleColor: appTheme === 'DARK' ? '#aaa' : '#555',
+  };
+
   return (
-    <View style={styles.layout}>
+    <View style={[styles.layout, { backgroundColor: themeStyles.backgroundColor }]}>
       
-      <View style={styles.sidebar}>
+      <View style={[styles.sidebar, { backgroundColor: themeStyles.sidebarColor }]}>
+        
         <View style={styles.logoContainer}>
           <View style={styles.logoPlaceholder}>
-            <Text style={{fontSize: 30}}>👦🏼</Text>
+            <Text style={{fontSize: 30}}></Text>
           </View>
-          <Text style={styles.logoTitle}>PARK DEX</Text>
-          <Text style={styles.logoSubtitle}>Construction Paper Edition</Text>
+          <Text style={[styles.logoTitle, { color: themeStyles.textColor }]}>PARK DEX</Text>
+          <Text style={[styles.logoSubtitle, { color: themeStyles.subtitleColor }]}>{displayName}</Text>
         </View>
 
         <View style={styles.menuItems}>
@@ -203,54 +229,51 @@ export default function HomeScreen({ navigation }) {
             style={[styles.menuItem, activeTab === 'EXPLORER' && styles.menuItemActive]}
             onPress={() => setActiveTab('EXPLORER')}
           >
-            <Ionicons name="compass" size={20} color={activeTab === 'EXPLORER' ? "#000" : "#555"} />
-            <Text style={[styles.menuText, activeTab === 'EXPLORER' && styles.menuTextActive]}>EXPLORER</Text>
+            <Ionicons name="compass" size={20} color={activeTab === 'EXPLORER' ? "#000" : themeStyles.textColor} />
+            <Text style={[styles.menuText, { color: themeStyles.textColor }, activeTab === 'EXPLORER' && styles.menuTextActive]}>EXPLORER</Text>
           </TouchableOpacity>
 
           <TouchableOpacity 
             style={[styles.menuItem, activeTab === 'FAVORITES' && styles.menuItemActive]}
             onPress={() => setActiveTab('FAVORITES')}
           >
-            <Ionicons name="heart" size={20} color={activeTab === 'FAVORITES' ? "#000" : "#555"} />
-            <Text style={[styles.menuText, activeTab === 'FAVORITES' && styles.menuTextActive]}>FAVORITES</Text>
+            <Ionicons name="heart" size={20} color={activeTab === 'FAVORITES' ? "#000" : themeStyles.textColor} />
+            <Text style={[styles.menuText, { color: themeStyles.textColor }, activeTab === 'FAVORITES' && styles.menuTextActive]}>FAVORITES</Text>
           </TouchableOpacity>
 
           <TouchableOpacity 
             style={[styles.menuItem, activeTab === 'ACCOUNT' && styles.menuItemActive]}
             onPress={() => setActiveTab('ACCOUNT')}
           >
-            <Ionicons name="person-circle" size={20} color={activeTab === 'ACCOUNT' ? "#000" : "#555"} />
-            <Text style={[styles.menuText, activeTab === 'ACCOUNT' && styles.menuTextActive]}>ACCOUNT</Text>
+            <Ionicons name="person-circle" size={20} color={activeTab === 'ACCOUNT' ? "#000" : themeStyles.textColor} />
+            <Text style={[styles.menuText, { color: themeStyles.textColor }, activeTab === 'ACCOUNT' && styles.menuTextActive]}>ACCOUNT</Text>
           </TouchableOpacity>
           
           <TouchableOpacity 
             style={[styles.menuItem, activeTab === 'SETTINGS' && styles.menuItemActive]}
             onPress={() => setActiveTab('SETTINGS')}
           >
-            <Ionicons name="settings" size={20} color={activeTab === 'SETTINGS' ? "#000" : "#555"} />
-            <Text style={[styles.menuText, activeTab === 'SETTINGS' && styles.menuTextActive]}>SETTINGS</Text>
+            <Ionicons name="settings" size={20} color={activeTab === 'SETTINGS' ? "#000" : themeStyles.textColor} />
+            <Text style={[styles.menuText, { color: themeStyles.textColor }, activeTab === 'SETTINGS' && styles.menuTextActive]}>SETTINGS</Text>
           </TouchableOpacity>
         </View>
       </View>
 
-      <View style={styles.mainContent}>
+      <View style={[styles.mainContent, { backgroundColor: themeStyles.backgroundColor }]}>
         {activeTab === 'FAVORITES' && displayedCharacters.length === 0 ? (
           <View style={styles.emptyState}>
-            <Ionicons name="heart-dislike-outline" size={60} color="#ccc" />
-            <Text style={styles.emptyStateText}>Nu ai adăugat niciun personaj la favorite.</Text>
-            <Text style={styles.emptyStateSubtext}>Mergi în Explorer și apasă pe inimi!</Text>
+            <Ionicons name="heart-dislike-outline" size={60} color={themeStyles.subtitleColor} />
+            <Text style={[styles.emptyStateText, { color: themeStyles.textColor }]}>Nu ai adăugat niciun personaj la favorite.</Text>
+            <Text style={[styles.emptyStateSubtext, { color: themeStyles.subtitleColor }]}>Mergi în Explorer și apasă pe inimi!</Text>
           </View>
         ) : activeTab === 'ACCOUNT' ? (
-          <AccountScreen />
+          <AccountScreen currentTheme={appTheme}/>
         ) : activeTab === 'SETTINGS' ? (
-           <View style={styles.emptyState}>
-            <Ionicons name="construct-outline" size={60} color="#ccc" />
-            <Text style={styles.emptyStateText}>Ecran în construcție...</Text>
-          </View>
+           <SettingsScreen currentTheme={appTheme} onThemeChange={setAppTheme} />
         ) : (
           <View style={{ flex: 1 }}>
             <FlatList
-              data={currentItems} // Acum folosim lista tăiată la 24
+              data={currentItems}
               keyExtractor={(item) => item.id.toString()}
               renderItem={renderCharacterCard}
               numColumns={4} 
@@ -259,9 +282,8 @@ export default function HomeScreen({ navigation }) {
               contentContainerStyle={{ padding: 20 }}
             />
             
-            {/* Butoanele de paginare sunt acum AICI, la finalul listei */}
             {totalPages > 1 && (
-              <View style={styles.paginationContainer}>
+              <View style={[styles.paginationContainer, { backgroundColor: themeStyles.backgroundColor }]}>
                 <TouchableOpacity 
                   style={[styles.pageButton, currentPage === 1 && styles.disabledButton]}
                   disabled={currentPage === 1}
@@ -293,7 +315,6 @@ export default function HomeScreen({ navigation }) {
   );
 }
 
-// ... aici jos rămân styles tăi exacți cum erau ...
 const styles = StyleSheet.create({
   layout: {
     flex: 1,
