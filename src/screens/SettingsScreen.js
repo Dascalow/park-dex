@@ -117,15 +117,42 @@ export default function SettingsScreen({ currentTheme, onThemeChange }) {
           </View>
         </View>
       </View>
-
-      <View style={styles.footer}>
-        <TouchableOpacity style={[styles.applyButton, { borderColor: textColor }]} onPress={handleApplySettings}>
-          <Ionicons name="save" size={18} color="#fff" />
-          <Text style={styles.applyButtonText}>APPLY SETTINGS</Text>
-        </TouchableOpacity>
-      </View>
-
-    </View>
+          <View style={styles.footer}>
+            <TouchableOpacity style={[styles.applyButton, { borderColor: textColor }]} onPress={handleApplySettings}>
+              <Ionicons name="save" size={18} color="#fff" />
+              <Text style={styles.applyButtonText}>APPLY SETTINGS</Text>
+            </TouchableOpacity>
+          </View>
+        <TouchableOpacity 
+      style={{
+        marginTop: 30,
+        backgroundColor: '#c0392b', // Roșu aprins în stil South Park
+        borderWidth: 3,
+        borderColor: '#000',
+        paddingVertical: 12,
+        paddingHorizontal: 20,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        shadowColor: '#000',
+        shadowOffset: { width: 4, height: 4 },
+        shadowOpacity: 1,
+        shadowRadius: 0,
+      }}
+      onPress={async () => {
+        try {
+          await signOut(auth);
+          // Firebase Auth va declanșa automat App.js să îl arunce înapoi la ecranul de Login!
+        } catch (error) {
+          console.error("Eroare la delogare:", error);
+        }
+      }}
+    >
+      <Ionicons name="log-out-outline" size={20} color="#fff" style={{ marginRight: 8 }} />
+      <Text style={{ color: '#fff', fontWeight: '900', letterSpacing: 1 }}>LOG OUT FROM DEX</Text>
+    </TouchableOpacity>
+        </View>
+    
   );
 }
 
