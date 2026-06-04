@@ -1,11 +1,11 @@
 import { Ionicons } from '@expo/vector-icons';
+import { signOut } from 'firebase/auth';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
-import { Alert, StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, ScrollView, StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native';
 import { auth, db } from '../firebaseConfig';
 
 export default function SettingsScreen({ currentTheme, onThemeChange }) {
-  
   const [hideIdentity, setHideIdentity] = useState(true); 
   const [accentColor, setAccentColor] = useState('#17a2b8'); 
 
@@ -53,7 +53,9 @@ export default function SettingsScreen({ currentTheme, onThemeChange }) {
   const sidebarBg = isDark ? '#222' : '#e0e0e0';
 
   return (
-    <View style={[styles.container, { backgroundColor: bgColor }]}>
+    <ScrollView style={[styles.container, { backgroundColor: bgColor }]} showsVerticalScrollIndicator={false}>
+      
+      {/* HEADER */}
       <View style={styles.header}>
         <Text style={[styles.title, { color: textColor }]}>CONFIGURATION</Text>
         <Text style={[styles.subtitle, { color: subtextColor }]}>
@@ -61,8 +63,8 @@ export default function SettingsScreen({ currentTheme, onThemeChange }) {
         </Text>
       </View>
 
-      <View style={styles.row}>
-        
+      {/* SECȚIUNEA 1: TEMĂ */}
+      <View style={styles.sectionRow}>
         <View style={[styles.themeBox, { backgroundColor: boxBg, borderColor: textColor }]}>
           <View style={styles.tag}><Text style={styles.tagText}>APP THEME</Text></View>
           <Text style={[styles.boxDesc, { color: textColor }]}>Select the visual environment for your DEX.</Text>
@@ -88,25 +90,27 @@ export default function SettingsScreen({ currentTheme, onThemeChange }) {
               style={[styles.themeOption, currentTheme === 'CLASSIC' && styles.themeOptionActive, { borderColor: textColor, backgroundColor: rowBg }]} 
               onPress={() => onThemeChange('CLASSIC')}
             >
-              <View style={[styles.circle, { backgroundColor: '#8ab4f8', borderColor: textColor }]} />
+              <View style={[styles.circle, { backgroundColor: '#f4d03f', borderColor: textColor }]} />
               <View style={[styles.themeLabel, { borderColor: textColor, backgroundColor: rowBg }]}><Text style={[styles.themeLabelText, { color: textColor }]}>CLASSIC SP</Text></View>
             </TouchableOpacity>
           </View>
         </View>
       </View>
 
+      {/* SECȚIUNEA 2: IDENTITATE (RESPONSIVĂ PENTRU MOBIL) */}
       <View style={[styles.alertsBox, { borderColor: textColor, backgroundColor: boxBg }]}>
         <View style={[styles.alertsSidebar, { borderColor: textColor, backgroundColor: sidebarBg }]}>
           <Text style={[styles.alertsTitle, { color: textColor }]}>IDENTITY</Text>
-          <Text style={[styles.alertsDesc, { color: subtextColor }]}>Control how the system perceives you in reality.</Text>
-          <Ionicons name="notifications" size={60} color={isDark ? '#555' : '#ccc'} style={{marginTop: 20}} />
+          <Text style={[styles.alertsDesc, { color: subtextColor }]}>Control how the system perceives you.</Text>
         </View>
         
         <View style={styles.alertsContent}>
           <View style={[styles.alertRow, { borderColor: textColor, backgroundColor: rowBg }]}>
             <View style={styles.alertTextContainer}>
               <Text style={[styles.alertRowTitle, { color: textColor }]}>HIDE REAL IDENTITY</Text>
-              <Text style={[styles.alertRowDesc, { color: subtextColor }]}>If ON, the system will refer to you as "Douchebag". If OFF, your real username is displayed.</Text>
+              <Text style={[styles.alertRowDesc, { color: subtextColor }]}>
+                If ON, you are "Douchebag". If OFF, your real username is displayed.
+              </Text>
             </View>
             <Switch 
               trackColor={{ false: "#ccc", true: "#17a2b8" }}
@@ -117,202 +121,203 @@ export default function SettingsScreen({ currentTheme, onThemeChange }) {
           </View>
         </View>
       </View>
-          <View style={styles.footer}>
-            <TouchableOpacity style={[styles.applyButton, { borderColor: textColor }]} onPress={handleApplySettings}>
-              <Ionicons name="save" size={18} color="#fff" />
-              <Text style={styles.applyButtonText}>APPLY SETTINGS</Text>
-            </TouchableOpacity>
-          </View>
-        <TouchableOpacity 
-      style={{
-        marginTop: 30,
-        backgroundColor: '#c0392b', // Roșu aprins în stil South Park
-        borderWidth: 3,
-        borderColor: '#000',
-        paddingVertical: 12,
-        paddingHorizontal: 20,
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        shadowColor: '#000',
-        shadowOffset: { width: 4, height: 4 },
-        shadowOpacity: 1,
-        shadowRadius: 0,
-      }}
-      onPress={async () => {
-        try {
-          await signOut(auth);
-          // Firebase Auth va declanșa automat App.js să îl arunce înapoi la ecranul de Login!
-        } catch (error) {
-          console.error("Eroare la delogare:", error);
-        }
-      }}
-    >
-      <Ionicons name="log-out-outline" size={20} color="#fff" style={{ marginRight: 8 }} />
-      <Text style={{ color: '#fff', fontWeight: '900', letterSpacing: 1 }}>LOG OUT FROM DEX</Text>
-    </TouchableOpacity>
-        </View>
-    
+
+      {/* BUTOANE FINALE */}
+      <View style={styles.footerRow}>
+        <TouchableOpacity style={[styles.applyButton, { borderColor: textColor }]} onPress={handleApplySettings}>
+          <Ionicons name="save" size={18} color="#fff" />
+          <Text style={styles.applyButtonText}>APPLY SETTINGS</Text>
+        </TouchableOpacity>
+      </View>
+
+      <TouchableOpacity 
+        style={styles.logoutButton}
+        onPress={async () => {
+          try {
+            console.log("Se încearcă delogarea...");
+            await signOut(auth);
+            console.log("Delogare reușită!");
+            
+            if (typeof window !== 'undefined' && window.location) {
+              window.location.reload();
+            }
+          } catch (error) {
+            console.error("Eroare completă la delogare:", error);
+            Alert.alert("Eroare la delogare", error.message);
+          }
+        }}
+      >
+        <Ionicons name="log-out-outline" size={20} color="#fff" style={{ marginRight: 8 }} />
+        <Text style={styles.logoutButtonText}>LOG OUT FROM DEX</Text>
+      </TouchableOpacity>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 30,
-    backgroundColor: '#fff',
+    padding: 20,
   },
   header: {
-    marginBottom: 30,
+    marginBottom: 25,
   },
   title: {
-    fontSize: 28,
+    fontSize: 26,
     fontWeight: '900',
-    color: '#000',
-    marginBottom: 10,
+    marginBottom: 8,
+    letterSpacing: -0.5,
   },
   subtitle: {
-    fontSize: 14,
-    color: '#555',
-    maxWidth: '80%',
-    lineHeight: 20,
+    fontSize: 13,
+    lineHeight: 18,
   },
-  row: {
-    flexDirection: 'row',
-    marginBottom: 30,
+  sectionRow: {
+    marginBottom: 25,
   },
   themeBox: {
-    flex: 1,
     borderWidth: 4,
-    borderColor: '#000',
-    padding: 20,
+    padding: 15,
     position: 'relative',
-    backgroundColor: '#f9f9f9',
+    paddingTop: 25,
   },
   tag: {
     position: 'absolute',
-    top: -15,
+    top: -14,
     left: 10,
     backgroundColor: '#17a2b8',
     borderWidth: 3,
     borderColor: '#000',
-    paddingHorizontal: 10,
-    paddingVertical: 3,
-    transform: [{ rotate: '-2deg' }],
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    transform: [{ rotate: '-1deg' }],
   },
   tagText: {
-    fontSize: 10,
+    fontSize: 9,
     fontWeight: '900',
     color: '#fff',
-    letterSpacing: 1,
+    letterSpacing: 0.5,
   },
   boxDesc: {
     fontSize: 12,
-    color: '#444',
-    marginBottom: 20,
-    marginTop: 10,
+    marginBottom: 15,
   },
   themeOptions: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexWrap: 'wrap', 
+    gap: 10,
   },
   themeOption: {
     flex: 1,
+    minWidth: 80,
     borderWidth: 3,
-    borderColor: '#000',
     alignItems: 'center',
-    padding: 15,
-    marginHorizontal: 5,
-    backgroundColor: '#fff',
+    padding: 12,
   },
   themeOptionActive: {
     backgroundColor: '#17a2b8',
-  },
-  circle: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
     borderWidth: 3,
     borderColor: '#000',
-    marginBottom: 15,
+  },
+  circle: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    borderWidth: 3,
+    borderColor: '#000',
+    marginBottom: 10,
   },
   themeLabel: {
     borderWidth: 2,
     borderColor: '#000',
-    backgroundColor: '#fff',
-    paddingHorizontal: 8,
+    paddingHorizontal: 6,
     paddingVertical: 2,
   },
   themeLabelText: {
-    fontSize: 10,
+    fontSize: 9,
     fontWeight: '900',
   },
   alertsBox: {
-    flexDirection: 'row',
+    flexDirection: 'column', 
     borderWidth: 4,
     borderColor: '#000',
-    backgroundColor: '#fff',
+    marginBottom: 25,
   },
   alertsSidebar: {
-    width: 200,
-    backgroundColor: '#e0e0e0',
-    borderRightWidth: 4,
+    width: '100%', 
+    borderBottomWidth: 4,
+    borderRightWidth: 0,
     borderColor: '#000',
-    padding: 20,
+    padding: 15,
   },
   alertsTitle: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '900',
-    marginBottom: 10,
+    marginBottom: 4,
   },
   alertsDesc: {
-    fontSize: 12,
-    color: '#555',
+    fontSize: 11,
   },
   alertsContent: {
-    flex: 1,
-    padding: 20,
+    padding: 15,
   },
   alertRow: {
     flexDirection: 'row',
     borderWidth: 3,
-    borderColor: '#000',
-    padding: 15,
-    marginBottom: 15,
+    padding: 12,
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#fff',
   },
   alertTextContainer: {
     flex: 1,
-    paddingRight: 20,
+    paddingRight: 10,
   },
   alertRowTitle: {
     fontSize: 12,
     fontWeight: '900',
-    marginBottom: 5,
+    marginBottom: 3,
   },
   alertRowDesc: {
     fontSize: 11,
-    color: '#666',
+    lineHeight: 14,
   },
-  footer: {
-    marginTop: 20,
-    alignItems: 'flex-end',
+  footerRow: {
+    marginTop: 10,
+    alignItems: 'stretch',
   },
   applyButton: {
     flexDirection: 'row',
     backgroundColor: '#007b8f',
     borderWidth: 3,
-    borderColor: '#000',
     paddingVertical: 12,
-    paddingHorizontal: 20,
     alignItems: 'center',
+    justifyContent: 'center',
   },
   applyButtonText: {
     color: '#fff',
     fontWeight: '900',
-    marginLeft: 10,
-    fontSize: 14,
+    marginLeft: 8,
+    fontSize: 13,
+  },
+  logoutButton: {
+    marginTop: 20,
+    marginBottom: 40,
+    backgroundColor: '#c0392b', 
+    borderWidth: 3,
+    borderColor: '#000',
+    paddingVertical: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 4, height: 4 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+  },
+  logoutButtonText: {
+    color: '#fff', 
+    fontWeight: '900', 
+    letterSpacing: 1,
+    fontSize: 13,
   }
 });
