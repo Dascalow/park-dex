@@ -16,13 +16,11 @@ export default function AccountScreen({ currentTheme }) {
 
     const userRef = doc(db, "users", auth.currentUser.uid);
     
-    // onSnapshot aduce datele în timp real (mult mai bine!)
     const unsubscribe = onSnapshot(userRef, (docSnap) => {
       if (docSnap.exists()) {
         const data = docSnap.data();
         setStats(data);
 
-        // MAGIA PENTRU NUME: Douchebag vs Username Real
         const hideIdentity = data.settings?.hideIdentity !== undefined ? data.settings.hideIdentity : true;
         if (hideIdentity) {
           setDisplayName("DOUCHEBAG");
@@ -63,7 +61,6 @@ export default function AccountScreen({ currentTheme }) {
     });
   };
 
-  // --- CULORI DINAMICE PENTRU TEMĂ ---
   const isDark = currentTheme === 'DARK';
   const bgColor = isDark ? '#222' : currentTheme === 'CLASSIC' ? '#f4d03f' : '#fff';
   const textColor = isDark ? '#fff' : '#000';

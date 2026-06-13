@@ -88,13 +88,11 @@ export default function LoginScreen({ navigation }) {
             </TouchableOpacity>
           </View>
 
-          {/* Butonul de login */}
           <TouchableOpacity style={styles.loginButton} activeOpacity={0.9} onPress={handleLogin}>
             <Text style={styles.loginButtonText}>ENTER SOUTH PARK</Text>
             <Ionicons name="arrow-forward" size={20} color="#fff" />
           </TouchableOpacity>
 
-          {/* Mesajul de eroare vizibil aici */}
           {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
         </View>
       </View>

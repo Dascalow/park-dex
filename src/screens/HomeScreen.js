@@ -332,10 +332,10 @@ const unsubscribe = onSnapshot(userRef, async (docSnap) => {
             <View style={{ 
               paddingHorizontal: 20, 
               paddingTop: 15, 
-              paddingBottom: 15, // Schimbăm din margin în padding pentru a crea o mască solidă
-              backgroundColor: themeStyles.backgroundColor, // Ia culoarea temei și blochează vizual ce e în spate
-              zIndex: 10, // Forțează bara să stea la suprafață, deasupra listei
-              elevation: 10 // Siguranță suplimentară pentru Android
+              paddingBottom: 15, 
+              backgroundColor: themeStyles.backgroundColor,
+              zIndex: 10,
+              elevation: 10 
             }}>
               <View style={{
                 flexDirection: 'row',

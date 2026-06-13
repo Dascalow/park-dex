@@ -43,7 +43,6 @@ export default function SettingsScreen({ currentTheme, onThemeChange }) {
     }
   };
 
-  // --- CULORI DINAMICE ---
   const isDark = currentTheme === 'DARK';
   const bgColor = isDark ? '#222' : currentTheme === 'CLASSIC' ? '#f4d03f' : '#fff';
   const textColor = isDark ? '#fff' : '#000';
@@ -54,8 +53,7 @@ export default function SettingsScreen({ currentTheme, onThemeChange }) {
 
   return (
     <ScrollView style={[styles.container, { backgroundColor: bgColor }]} showsVerticalScrollIndicator={false}>
-      
-      {/* HEADER */}
+    
       <View style={styles.header}>
         <Text style={[styles.title, { color: textColor }]}>CONFIGURATION</Text>
         <Text style={[styles.subtitle, { color: subtextColor }]}>
@@ -63,7 +61,6 @@ export default function SettingsScreen({ currentTheme, onThemeChange }) {
         </Text>
       </View>
 
-      {/* SECȚIUNEA 1: TEMĂ */}
       <View style={styles.sectionRow}>
         <View style={[styles.themeBox, { backgroundColor: boxBg, borderColor: textColor }]}>
           <View style={styles.tag}><Text style={styles.tagText}>APP THEME</Text></View>
@@ -97,7 +94,6 @@ export default function SettingsScreen({ currentTheme, onThemeChange }) {
         </View>
       </View>
 
-      {/* SECȚIUNEA 2: IDENTITATE (RESPONSIVĂ PENTRU MOBIL) */}
       <View style={[styles.alertsBox, { borderColor: textColor, backgroundColor: boxBg }]}>
         <View style={[styles.alertsSidebar, { borderColor: textColor, backgroundColor: sidebarBg }]}>
           <Text style={[styles.alertsTitle, { color: textColor }]}>IDENTITY</Text>
