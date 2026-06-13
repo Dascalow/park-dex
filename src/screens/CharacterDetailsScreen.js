@@ -1,9 +1,12 @@
 import { Ionicons } from '@expo/vector-icons';
-import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View, useWindowDimensions } from 'react-native';
 
 import loreData from '../data/lore.json';
 
 export default function CharacterDetailsScreen({ route, navigation }) {
+  const { width } = useWindowDimensions();
+  const isMobile = width < 768;
+
   const { character, imageUrl, currentTheme = 'LIGHT' } = route.params || {};
 
   const attributes = character?.attributes || {};
@@ -48,7 +51,6 @@ export default function CharacterDetailsScreen({ route, navigation }) {
   const displayAge = lore.age || attributes.age || "Unknown";
   const displayGrade = lore.grade || attributes.grade || "Unknown";
   const displayVoicedBy = lore.voicedBy || attributes.voiced_by || "Matt & Trey";
-
   const isDark = currentTheme === 'DARK';
   const bgColor = isDark ? '#222' : currentTheme === 'CLASSIC' ? '#f4d03f' : '#fff';
   const textColor = isDark ? '#fff' : '#000';
@@ -77,36 +79,46 @@ export default function CharacterDetailsScreen({ route, navigation }) {
 
   return (
     <View style={[styles.container, { backgroundColor: bgColor }]}>
+      
       <View style={[styles.navBar, { backgroundColor: navBg, borderColor: textColor }]}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
           <Ionicons name="arrow-back" size={20} color={textColor} style={{ marginRight: 8 }} />
           <Text style={[styles.backText, { color: textColor }]}>BACK TO DEX</Text>
         </TouchableOpacity>
       </View>
-
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+      <ScrollView contentContainerStyle={[styles.scrollContent, { padding: isMobile ? 15 : 30 }]} showsVerticalScrollIndicator={false}>
         
-        <View style={styles.headerRow}>
-          <View style={[styles.imageBox, { borderColor: textColor, backgroundColor: isDark ? '#2c3e50' : '#6ec3b9' }]}>
+        <View style={[styles.headerRow, { flexDirection: isMobile ? 'column' : 'row', alignItems: isMobile ? 'center' : 'flex-start', gap: isMobile ? 15 : 30 }]}>
+          
+          <View style={[styles.imageBox, { 
+              borderColor: textColor, 
+              backgroundColor: isDark ? '#2c3e50' : '#6ec3b9',
+              width: isMobile ? 160 : 200,
+              height: isMobile ? 160 : 200 
+            }]}>
             <Image source={{ uri: imageUrl }} style={styles.image} resizeMode="contain" />
           </View>
           
-          <View style={styles.titleBox}>
-            <View style={styles.tagsRow}>
+          <View style={[styles.titleBox, { alignItems: isMobile ? 'center' : 'flex-start' }]}>
+            <View style={[styles.tagsRow, { justifyContent: isMobile ? 'center' : 'flex-start' }]}>
               {lore.tags.map((tag, idx) => (
                 <View key={idx} style={[styles.tag, { borderColor: textColor, backgroundColor: boxBg }, idx === 1 && { backgroundColor: '#c0392b' }]}>
                   <Text style={[styles.tagText, { color: textColor }, idx === 1 && { color: '#fff' }]}>{tag}</Text>
                 </View>
               ))}
             </View>
-            <Text style={[styles.characterName, { color: textColor }]}>{name.toUpperCase()}</Text>
-            <Text style={[styles.shortDesc, { color: subtextColor }]}>{lore.shortDesc}</Text>
+            <Text style={[styles.characterName, { color: textColor, fontSize: isMobile ? 28 : 42, textAlign: isMobile ? 'center' : 'left' }]}>
+              {name.toUpperCase()}
+            </Text>
+            <Text style={[styles.shortDesc, { color: subtextColor, textAlign: isMobile ? 'center' : 'left' }]}>
+              {lore.shortDesc}
+            </Text>
           </View>
         </View>
 
         <View style={[styles.divider, { backgroundColor: textColor }]} />
 
-        <View style={styles.contentRow}>
+        <View style={[styles.contentRow, { flexDirection: isMobile ? 'column' : 'row', gap: isMobile ? 20 : 30 }]}>
           
           <View style={styles.leftColumn}>
             <View style={[styles.bioBox, { borderColor: textColor }]}>
@@ -175,16 +187,9 @@ const styles = StyleSheet.create({
     fontWeight: '900',
     letterSpacing: 1,
   },
-  scrollContent: {
-    padding: 30,
-  },
-  headerRow: {
-    flexDirection: 'row',
-    gap: 30,
-  },
+
+  headerRow: {}, 
   imageBox: {
-    width: 200,
-    height: 200,
     borderWidth: 4,
     justifyContent: 'flex-end',
     alignItems: 'center',
@@ -195,10 +200,10 @@ const styles = StyleSheet.create({
   },
   titleBox: {
     flex: 1,
-    justifyContent: 'center',
   },
   tagsRow: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: 10,
     marginBottom: 10,
   },
@@ -213,7 +218,6 @@ const styles = StyleSheet.create({
     fontFamily: 'monospace',
   },
   characterName: {
-    fontSize: 42,
     fontWeight: '900',
     letterSpacing: -1,
     marginBottom: 10,
@@ -226,10 +230,7 @@ const styles = StyleSheet.create({
     height: 4,
     marginVertical: 25,
   },
-  contentRow: {
-    flexDirection: 'row',
-    gap: 30,
-  },
+  contentRow: {},
   leftColumn: {
     flex: 1.4,
   },

@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { arrayRemove, arrayUnion, doc, increment, onSnapshot, setDoc } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, FlatList, Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, FlatList, Image, StyleSheet, Text, TextInput, TouchableOpacity, View, useWindowDimensions } from 'react-native';
 import characterAssets from '../data/characters_assets.json';
 import loreData from '../data/lore.json';
 import { auth, db } from '../firebaseConfig';
@@ -10,20 +10,17 @@ import AccountScreen from './AccountScreen';
 import SettingsScreen from './SettingsScreen';
  
 export default function HomeScreen({ navigation }) {
+  const { width } = useWindowDimensions();
+  const isMobile = width < 768; 
+
   const [characters, setCharacters] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
- 
   const [favorites, setFavorites] = useState([]);
-  
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 24;
-
   const [activeTab, setActiveTab] = useState('EXPLORER');
-
   const [appTheme, setAppTheme] = useState('LIGHT');
-
   const [displayName, setDisplayName] = useState('DOUCHEBAG');
-
   const [searchQuery, setSearchQuery] = useState('');
 
   const toggleFavorite = async (id) => {
@@ -47,15 +44,11 @@ export default function HomeScreen({ navigation }) {
     }
   };
 
-const fetchCharacters = async () => {
+  const fetchCharacters = async () => {
     try {
       setIsLoading(true);
-
       const firstResponse = await fetch('https://spapi.dev/api/characters');
-      
-      if (!firstResponse.ok) {
-        throw new Error(`Eroare HTTP: ${firstResponse.status}`);
-      }
+      if (!firstResponse.ok) throw new Error(`Eroare HTTP: ${firstResponse.status}`);
       
       const firstJson = await firstResponse.json();
       let allChars = [...firstJson.data];
@@ -63,15 +56,10 @@ const fetchCharacters = async () => {
 
       for (let i = 2; i <= totalPagesFromApi; i++) {
         if (i === 21 || i === 22) continue;
-
         const res = await fetch(`https://spapi.dev/api/characters?page=${i}`);
         if (res.ok) {
           const json = await res.json();
-          if (json && json.data) {
-            allChars = [...allChars, ...json.data];
-          }
-        } else {
-          console.warn(`Am ratat pagina ${i} - Status: ${res.status}`);
+          if (json && json.data) allChars = [...allChars, ...json.data];
         }
         await new Promise(resolve => setTimeout(resolve, 500));
       }
@@ -80,18 +68,13 @@ const fetchCharacters = async () => {
       await AsyncStorage.setItem('cached_characters', JSON.stringify(allChars));
       
     } catch (error) {
-      console.log("Aplicația este OFFLINE. Se încarcă personajele ȘI datele de utilizator din memoria locală...");
-      
       try {
         const cachedData = await AsyncStorage.getItem('cached_characters');
-        if (cachedData !== null) {
-          setCharacters(JSON.parse(cachedData));
-        }
+        if (cachedData !== null) setCharacters(JSON.parse(cachedData));
 
         const cachedUserData = await AsyncStorage.getItem('cached_user_data');
         if (cachedUserData !== null) {
           const localData = JSON.parse(cachedUserData);
-          
           if (localData.favorites) setFavorites(localData.favorites);
           if (localData.settings && localData.settings.theme) setAppTheme(localData.settings.theme);
           
@@ -102,35 +85,28 @@ const fetchCharacters = async () => {
             const realName = auth.currentUser?.email ? auth.currentUser.email.split('@')[0] : "DOUCHEBAG";
             setDisplayName(realName.toUpperCase());
           }
-          console.log("Toate datele de utilizator au fost restaurate offline cu succes!");
         }
-      } catch (storageErr) {
-        console.error("Eroare la citirea datelor offline:", storageErr);
-      }
+      } catch (storageErr) {}
     } finally {
       setIsLoading(false);
     }
   };
-useEffect(() => {
+
+  useEffect(() => {
     fetchCharacters();
-    
     if (!auth.currentUser) return;
     const userRef = doc(db, "users", auth.currentUser.uid);
 
-const unsubscribe = onSnapshot(userRef, async (docSnap) => {
+    const unsubscribe = onSnapshot(userRef, async (docSnap) => {
       if (docSnap.exists()) {
         const data = docSnap.data();
         try {
           await AsyncStorage.setItem('cached_user_data', JSON.stringify(data));
-        } catch (err) {
-          console.log("Eroare la scrierea cache-ului de utilizator:", err);
-        }
+        } catch (err) {}
 
         if (data.favorites) setFavorites(data.favorites);
-      
-        if (data.settings && data.settings.theme) {
-          setAppTheme(data.settings.theme);
-        }
+        if (data.settings && data.settings.theme) setAppTheme(data.settings.theme);
+        
         const hideIdentity = data.settings?.hideIdentity !== undefined ? data.settings.hideIdentity : true;
         if (hideIdentity) {
           setDisplayName("DOUCHEBAG");
@@ -151,7 +127,6 @@ const unsubscribe = onSnapshot(userRef, async (docSnap) => {
   const handleViewDex = async (item, imageUrl) => {
     try {
       const userRef = doc(db, "users", auth.currentUser.uid);
-      
       const charName = (item.attributes?.name || item.name || "").toLowerCase();
       let newBadge = null;
       
@@ -161,16 +136,10 @@ const unsubscribe = onSnapshot(userRef, async (docSnap) => {
       else if (charName.includes("randy")) newBadge = "I THOUGHT THIS WAS AMERICA!";
       else if (charName.includes("butters")) newBadge = "OH, HAMBURGERS!";
 
-
       const updates = { cheesyPoofs: increment(1) };
-      if (newBadge) {
-        updates.achievements = arrayUnion(newBadge);
-      }
-
+      if (newBadge) updates.achievements = arrayUnion(newBadge);
       await setDoc(userRef, updates, { merge: true });
-    } catch (error) {
-      console.error("Eroare la incrementarea cheesy poofs:", error);
-    }
+    } catch (error) {}
     
     navigation.navigate('CharacterDetails', { character: item, imageUrl: imageUrl, currentTheme: appTheme });
   };
@@ -178,10 +147,7 @@ const unsubscribe = onSnapshot(userRef, async (docSnap) => {
   const renderCharacterCard = ({ item }) => {
     const asset = characterAssets[String(item.id)];
     let imageUrl = asset ? asset.imageUrl : "https://upload.wikimedia.org/wikipedia/commons/8/89/Portrait_Placeholder.png";
-
-    if (imageUrl && imageUrl.startsWith('/')) {
-      imageUrl = 'https://southpark.wiki.gg' + imageUrl;
-    }
+    if (imageUrl && imageUrl.startsWith('/')) imageUrl = 'https://southpark.wiki.gg' + imageUrl;
 
     const attributes = item.attributes || {};
     const characterName = attributes.name || item.name || "Unknown";
@@ -189,7 +155,6 @@ const unsubscribe = onSnapshot(userRef, async (docSnap) => {
 
     const charNameLower = characterName.toLowerCase();
     const hasCustomLore = loreData[charNameLower];
-    
     let tag1 = "UNKNOWN";
     let tag2 = "RESIDENT";
 
@@ -202,7 +167,8 @@ const unsubscribe = onSnapshot(userRef, async (docSnap) => {
     }
 
     return (
-      <View style={styles.card}>
+      // Schimbam latimea cardului in functie de ecran!
+      <View style={[styles.card, { width: isMobile ? '47%' : '23%' }]}>
         <View style={styles.imageContainer}>
           <Image source={{ uri: imageUrl }} style={styles.image} resizeMode="contain" />
         </View>
@@ -211,11 +177,7 @@ const unsubscribe = onSnapshot(userRef, async (docSnap) => {
           <View style={styles.nameRow}>
             <Text style={styles.name} numberOfLines={2}>{characterName.toUpperCase()}</Text>
             <TouchableOpacity onPress={() => toggleFavorite(item.id)}>
-              <Ionicons 
-                name={isFavorite ? "heart" : "heart-outline"} 
-                size={22} 
-                color={isFavorite ? "#c0392b" : themeStyles.textColor} 
-              />
+              <Ionicons name={isFavorite ? "heart" : "heart-outline"} size={22} color={isFavorite ? "#c0392b" : themeStyles.textColor} />
             </TouchableOpacity>
           </View>
           
@@ -225,11 +187,7 @@ const unsubscribe = onSnapshot(userRef, async (docSnap) => {
           </View>
         </View>
 
-        <TouchableOpacity 
-          style={styles.viewDexButton} 
-          activeOpacity={0.7}
-          onPress={() => handleViewDex(item, imageUrl)}
-        >
+        <TouchableOpacity style={styles.viewDexButton} activeOpacity={0.7} onPress={() => handleViewDex(item, imageUrl)}>
           <Ionicons name="eye" size={16} color="#000" style={{ marginRight: 5 }} />
           <Text style={styles.viewDexText}>VIEW DEX</Text>
         </TouchableOpacity>
@@ -268,53 +226,44 @@ const unsubscribe = onSnapshot(userRef, async (docSnap) => {
   };
 
   return (
-    <View style={[styles.layout, { backgroundColor: themeStyles.backgroundColor }]}>
+    <View style={[styles.layout, { backgroundColor: themeStyles.backgroundColor, flexDirection: isMobile ? 'column' : 'row' }]}>
       
-      <View style={[styles.sidebar, { backgroundColor: themeStyles.sidebarColor }]}>
-        
-        <View style={styles.logoContainer}>
-          <View style={styles.logoPlaceholder}>
-            <Text style={{fontSize: 30}}></Text>
+      {!isMobile && (
+        <View style={[styles.sidebar, { backgroundColor: themeStyles.sidebarColor }]}>
+          <View style={styles.logoContainer}>
+            <View style={styles.logoPlaceholder}><Text style={{fontSize: 30}}></Text></View>
+            <Text style={[styles.logoTitle, { color: themeStyles.textColor }]}>PARK DEX</Text>
+            <Text style={[styles.logoSubtitle, { color: themeStyles.subtitleColor }]}>{displayName}</Text>
           </View>
-          <Text style={[styles.logoTitle, { color: themeStyles.textColor }]}>PARK DEX</Text>
-          <Text style={[styles.logoSubtitle, { color: themeStyles.subtitleColor }]}>{displayName}</Text>
+
+          <View style={styles.menuItems}>
+            <TouchableOpacity style={[styles.menuItem, activeTab === 'EXPLORER' && styles.menuItemActive]} onPress={() => setActiveTab('EXPLORER')}>
+              <Ionicons name="compass" size={20} color={activeTab === 'EXPLORER' ? "#000" : themeStyles.textColor} />
+              <Text style={[styles.menuText, { color: themeStyles.textColor }, activeTab === 'EXPLORER' && styles.menuTextActive]}>EXPLORER</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={[styles.menuItem, activeTab === 'FAVORITES' && styles.menuItemActive]} onPress={() => setActiveTab('FAVORITES')}>
+              <Ionicons name="heart" size={20} color={activeTab === 'FAVORITES' ? "#000" : themeStyles.textColor} />
+              <Text style={[styles.menuText, { color: themeStyles.textColor }, activeTab === 'FAVORITES' && styles.menuTextActive]}>FAVORITES</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={[styles.menuItem, activeTab === 'ACCOUNT' && styles.menuItemActive]} onPress={() => setActiveTab('ACCOUNT')}>
+              <Ionicons name="person-circle" size={20} color={activeTab === 'ACCOUNT' ? "#000" : themeStyles.textColor} />
+              <Text style={[styles.menuText, { color: themeStyles.textColor }, activeTab === 'ACCOUNT' && styles.menuTextActive]}>ACCOUNT</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={[styles.menuItem, activeTab === 'SETTINGS' && styles.menuItemActive]} onPress={() => setActiveTab('SETTINGS')}>
+              <Ionicons name="settings" size={20} color={activeTab === 'SETTINGS' ? "#000" : themeStyles.textColor} />
+              <Text style={[styles.menuText, { color: themeStyles.textColor }, activeTab === 'SETTINGS' && styles.menuTextActive]}>SETTINGS</Text>
+            </TouchableOpacity>
+          </View>
         </View>
-
-        <View style={styles.menuItems}>
-          <TouchableOpacity 
-            style={[styles.menuItem, activeTab === 'EXPLORER' && styles.menuItemActive]}
-            onPress={() => setActiveTab('EXPLORER')}
-          >
-            <Ionicons name="compass" size={20} color={activeTab === 'EXPLORER' ? "#000" : themeStyles.textColor} />
-            <Text style={[styles.menuText, { color: themeStyles.textColor }, activeTab === 'EXPLORER' && styles.menuTextActive]}>EXPLORER</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity 
-            style={[styles.menuItem, activeTab === 'FAVORITES' && styles.menuItemActive]}
-            onPress={() => setActiveTab('FAVORITES')}
-          >
-            <Ionicons name="heart" size={20} color={activeTab === 'FAVORITES' ? "#000" : themeStyles.textColor} />
-            <Text style={[styles.menuText, { color: themeStyles.textColor }, activeTab === 'FAVORITES' && styles.menuTextActive]}>FAVORITES</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity 
-            style={[styles.menuItem, activeTab === 'ACCOUNT' && styles.menuItemActive]}
-            onPress={() => setActiveTab('ACCOUNT')}
-          >
-            <Ionicons name="person-circle" size={20} color={activeTab === 'ACCOUNT' ? "#000" : themeStyles.textColor} />
-            <Text style={[styles.menuText, { color: themeStyles.textColor }, activeTab === 'ACCOUNT' && styles.menuTextActive]}>ACCOUNT</Text>
-          </TouchableOpacity>
-          
-          <TouchableOpacity 
-            style={[styles.menuItem, activeTab === 'SETTINGS' && styles.menuItemActive]}
-            onPress={() => setActiveTab('SETTINGS')}
-          >
-            <Ionicons name="settings" size={20} color={activeTab === 'SETTINGS' ? "#000" : themeStyles.textColor} />
-            <Text style={[styles.menuText, { color: themeStyles.textColor }, activeTab === 'SETTINGS' && styles.menuTextActive]}>SETTINGS</Text>
-          </TouchableOpacity>
+      )}
+      {isMobile && (
+        <View style={[styles.mobileHeader, { backgroundColor: themeStyles.sidebarColor }]}>
+          <View>
+            <Text style={[styles.logoTitle, { color: themeStyles.textColor }]}>PARK DEX</Text>
+            <Text style={[styles.logoSubtitle, { color: themeStyles.subtitleColor }]}>{displayName}</Text>
+          </View>
         </View>
-      </View>
-
+      )}
       <View style={[styles.mainContent, { backgroundColor: themeStyles.backgroundColor }]}>
         {activeTab === 'FAVORITES' && displayedCharacters.length === 0 ? (
           <View style={styles.emptyState}>
@@ -329,39 +278,15 @@ const unsubscribe = onSnapshot(userRef, async (docSnap) => {
         ) : (
           <View style={{ flex: 1 }}>
             
-            <View style={{ 
-              paddingHorizontal: 20, 
-              paddingTop: 15, 
-              paddingBottom: 15, 
-              backgroundColor: themeStyles.backgroundColor,
-              zIndex: 10,
-              elevation: 10 
-            }}>
-              <View style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                borderWidth: 3,
-                borderColor: themeStyles.textColor,
-                backgroundColor: appTheme === 'DARK' ? '#333' : '#fff',
-                paddingHorizontal: 15,
-                paddingVertical: 10
-              }}>
+            <View style={{ paddingHorizontal: 20, paddingTop: 15, paddingBottom: 15, backgroundColor: themeStyles.backgroundColor, zIndex: 10, elevation: 10 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', borderWidth: 3, borderColor: themeStyles.textColor, backgroundColor: appTheme === 'DARK' ? '#333' : '#fff', paddingHorizontal: 15, paddingVertical: 10 }}>
                 <Ionicons name="search" size={20} color={themeStyles.textColor} style={{ marginRight: 10 }} />
                 <TextInput 
-                  style={{
-                    flex: 1,
-                    fontSize: 14,
-                    fontWeight: 'bold',
-                    color: themeStyles.textColor,
-                    outlineStyle: 'none' 
-                  }}
+                  style={{ flex: 1, fontSize: 14, fontWeight: 'bold', color: themeStyles.textColor, outlineStyle: 'none' }}
                   placeholder="CAUTĂ UN CETĂȚEAN..."
                   placeholderTextColor={appTheme === 'DARK' ? '#888' : '#666'}
                   value={searchQuery}
-                  onChangeText={(text) => {
-                    setSearchQuery(text);
-                    setCurrentPage(1); 
-                  }}
+                  onChangeText={(text) => { setSearchQuery(text); setCurrentPage(1); }}
                 />
                 {searchQuery.length > 0 && (
                   <TouchableOpacity onPress={() => setSearchQuery('')}>
@@ -372,36 +297,29 @@ const unsubscribe = onSnapshot(userRef, async (docSnap) => {
             </View>
 
             <FlatList
+              key={isMobile ? 'mobile' : 'desktop'}
               data={currentItems}
               keyExtractor={(item) => item.id.toString()}
               renderItem={renderCharacterCard}
-              numColumns={4} 
+              numColumns={isMobile ? 2 : 4}
               columnWrapperStyle={styles.row}
               showsVerticalScrollIndicator={false}
-              contentContainerStyle={{ padding: 20 }}
+              contentContainerStyle={{ padding: isMobile ? 10 : 20 }}
             />
             
             {totalPages > 1 && (
               <View style={[styles.paginationContainer, { backgroundColor: themeStyles.backgroundColor }]}>
-                <TouchableOpacity 
-                  style={[styles.pageButton, currentPage === 1 && styles.disabledButton]}
-                  disabled={currentPage === 1}
-                  onPress={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                >
+                <TouchableOpacity style={[styles.pageButton, currentPage === 1 && styles.disabledButton]} disabled={currentPage === 1} onPress={() => setCurrentPage(prev => Math.max(prev - 1, 1))}>
                   <Ionicons name="arrow-back" size={20} color={currentPage === 1 ? "#999" : "#000"} />
-                  <Text style={[styles.pageButtonText, currentPage === 1 && styles.disabledButtonText]}>PREV</Text>
+                  {!isMobile && <Text style={[styles.pageButtonText, currentPage === 1 && styles.disabledButtonText]}>PREV</Text>}
                 </TouchableOpacity>
 
                 <View style={styles.pageBadge}>
                   <Text style={styles.pageBadgeText}>PAGE {currentPage} / {totalPages}</Text>
                 </View>
 
-                <TouchableOpacity 
-                  style={[styles.pageButton, currentPage === totalPages && styles.disabledButton]}
-                  disabled={currentPage === totalPages}
-                  onPress={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                >
-                  <Text style={[styles.pageButtonText, currentPage === totalPages && styles.disabledButtonText]}>NEXT</Text>
+                <TouchableOpacity style={[styles.pageButton, currentPage === totalPages && styles.disabledButton]} disabled={currentPage === totalPages} onPress={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}>
+                  {!isMobile && <Text style={[styles.pageButtonText, currentPage === totalPages && styles.disabledButtonText]}>NEXT</Text>}
                   <Ionicons name="arrow-forward" size={20} color={currentPage === totalPages ? "#999" : "#000"} />
                 </TouchableOpacity>
               </View>
@@ -410,6 +328,27 @@ const unsubscribe = onSnapshot(userRef, async (docSnap) => {
         )}
       </View>
 
+      {isMobile && (
+        <View style={[styles.bottomNav, { backgroundColor: themeStyles.sidebarColor }]}>
+          <TouchableOpacity style={styles.bottomNavItem} onPress={() => setActiveTab('EXPLORER')}>
+            <Ionicons name="compass" size={24} color={activeTab === 'EXPLORER' ? "#17a2b8" : themeStyles.textColor} />
+            <Text style={[styles.bottomNavText, { color: activeTab === 'EXPLORER' ? "#17a2b8" : themeStyles.textColor }]}>EXPLORE</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.bottomNavItem} onPress={() => setActiveTab('FAVORITES')}>
+            <Ionicons name="heart" size={24} color={activeTab === 'FAVORITES' ? "#17a2b8" : themeStyles.textColor} />
+            <Text style={[styles.bottomNavText, { color: activeTab === 'FAVORITES' ? "#17a2b8" : themeStyles.textColor }]}>FAVS</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.bottomNavItem} onPress={() => setActiveTab('ACCOUNT')}>
+            <Ionicons name="person-circle" size={24} color={activeTab === 'ACCOUNT' ? "#17a2b8" : themeStyles.textColor} />
+            <Text style={[styles.bottomNavText, { color: activeTab === 'ACCOUNT' ? "#17a2b8" : themeStyles.textColor }]}>ACCOUNT</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.bottomNavItem} onPress={() => setActiveTab('SETTINGS')}>
+            <Ionicons name="settings" size={24} color={activeTab === 'SETTINGS' ? "#17a2b8" : themeStyles.textColor} />
+            <Text style={[styles.bottomNavText, { color: activeTab === 'SETTINGS' ? "#17a2b8" : themeStyles.textColor }]}>SETTING</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
     </View>
   );
 }
@@ -417,8 +356,6 @@ const unsubscribe = onSnapshot(userRef, async (docSnap) => {
 const styles = StyleSheet.create({
   layout: {
     flex: 1,
-    flexDirection: 'row',
-    backgroundColor: '#f5f5f5',
   },
   centered: {
     flex: 1, 
@@ -432,6 +369,33 @@ const styles = StyleSheet.create({
     borderRightWidth: 3,
     borderColor: '#000',
     paddingTop: 30,
+  },
+  mobileHeader: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 15,
+    borderBottomWidth: 3,
+    borderColor: '#000',
+    paddingTop: 40, 
+  },
+  bottomNav: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'center',
+    borderTopWidth: 3,
+    borderColor: '#000',
+    paddingVertical: 10,
+    paddingBottom: 25, 
+  },
+  bottomNavItem: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  bottomNavText: {
+    fontSize: 10,
+    fontWeight: 'bold',
+    marginTop: 4,
   },
   logoContainer: {
     alignItems: 'center',
@@ -451,11 +415,13 @@ const styles = StyleSheet.create({
     fontSize: 22,
     fontWeight: '900',
     color: '#000',
+    textAlign: 'center',
   },
   logoSubtitle: {
     fontSize: 12,
     fontFamily: 'monospace',
     color: '#555',
+    textAlign: 'center',
   },
   menuItems: {
     paddingHorizontal: 15,
@@ -487,25 +453,23 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
   },
   row: {
-    justifyContent: 'flex-start',
-    gap: 20,
+    justifyContent: 'space-between',
     marginBottom: 20,
   },
   card: {
     backgroundColor: '#fff',
-    width: '23%',
-    borderWidth: 4,
+    borderWidth: 3,
     borderColor: '#000',
     shadowColor: '#000',
-    shadowOffset: { width: 4, height: 4 },
+    shadowOffset: { width: 3, height: 3 },
     shadowOpacity: 1,
     shadowRadius: 0,
   },
   imageContainer: {
     backgroundColor: '#34495e',
-    borderBottomWidth: 4,
+    borderBottomWidth: 3,
     borderColor: '#000',
-    height: 160,
+    height: 140,
     justifyContent: 'flex-end',
     alignItems: 'center',
   },
@@ -515,26 +479,26 @@ const styles = StyleSheet.create({
   },
   cardBody: {
     padding: 10,
-    height: 100,
+    height: 90,
   },
   nameRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: 10,
+    marginBottom: 5,
   },
   name: {
     flex: 1,
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '900',
     color: '#000',
-    lineHeight: 18,
+    lineHeight: 16,
     paddingRight: 5,
   },
   tagsContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 5,
+    gap: 4,
   },
   tag: {
     borderWidth: 1.5,
@@ -543,13 +507,13 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
   },
   tagText: {
-    fontSize: 9,
+    fontSize: 8,
     fontWeight: 'bold',
     color: '#000',
   },
   viewDexButton: {
     flexDirection: 'row',
-    borderTopWidth: 4,
+    borderTopWidth: 3,
     borderColor: '#000',
     backgroundColor: '#f5f5f5',
     padding: 10,
@@ -557,7 +521,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   viewDexText: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '900',
     color: '#000',
   },
@@ -572,11 +536,13 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginTop: 15,
     color: '#333',
+    textAlign: 'center',
   },
   emptyStateSubtext: {
     fontSize: 14,
     color: '#666',
     marginTop: 5,
+    textAlign: 'center',
   },
   paginationContainer: {
     flexDirection: 'row',
@@ -585,9 +551,8 @@ const styles = StyleSheet.create({
     paddingVertical: 15,
     paddingHorizontal: 10,
     backgroundColor: '#fff',
-    borderTopWidth: 4,
+    borderTopWidth: 3,
     borderColor: '#000',
-    marginTop: 10,
   },
   pageButton: {
     flexDirection: 'row',
